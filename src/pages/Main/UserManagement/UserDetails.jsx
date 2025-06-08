@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { updateUser, deleteUser } from "../../../firebase/userservices";
 import { fetchDepartments } from "../../../firebase/departmentservices";
-import { fetchTitles } from "../../../firebase/usertitleservices";
+import { fetchPositions } from "../../../firebase/usertitleservices";
 import { useAuth } from "../../../context/AuthContext";
 import ModalDetails from "../../../components/Modal/ModalDetails";
 import MessageModal from "../../../components/Modal/MessageModal";
@@ -26,7 +26,7 @@ const UserDetails = ({ userDetails, onClose }) => {
 
     useEffect(() => {
         loadIdNameMap(fetchDepartments, setDepartments, "departments");
-        loadIdNameMap(fetchTitles, setTitles, "titles");
+        loadIdNameMap(fetchPositions, setTitles, "titles");
     }, []);
 
     const loadIdNameMap = async (fetchFn, setFn, label) => {

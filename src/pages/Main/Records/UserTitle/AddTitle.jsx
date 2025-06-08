@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { addTitle } from "../../../../firebase/usertitleservices";
+import { addPosition } from "../../../../firebase/usertitleservices";
 import { useAuth } from "../../../../context/AuthContext";
 import { FiArrowLeft } from "react-icons/fi";
 import MessageModal from "../../../../components/Modal/MessageModal";
@@ -21,7 +21,7 @@ const AddTitle = ({ onClose }) => {
 
     setIsLoading(true);
     try {
-      await addTitle(title, description, parseInt(score) || 0, profile?.id);
+      await addPosition(title, description, parseInt(score) || 0, profile?.id);
       setMessage("Title was added successfully!");
       setTitle("");
       setDescription("");

@@ -29,13 +29,14 @@ const generateDepartmentID = async () => {
     }
 };
 
-const addDepartment = async (name, description, logby) => {
+const addDepartment = async (name, description, departmentType, logby) => {
     try {
         const newDepartmentID = await generateDepartmentID();
 
         await setDoc(doc(db, "departments", newDepartmentID), {
             name,
             description,
+            departmentType,
             dateCreated: serverTimestamp(),
             dateUpdated: serverTimestamp(),
         });
@@ -54,6 +55,7 @@ const updateDepartment = async (selectedDepartment, logby) => {
         await setDoc(doc(db, "departments", selectedDepartment.id), {
             name: selectedDepartment.name,
             description: selectedDepartment.description,
+            departmentType: selectedDepartment.deparmentType,
             dateUpdated: serverTimestamp(),
         }, { merge: true });
 

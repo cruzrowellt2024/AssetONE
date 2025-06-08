@@ -5,7 +5,7 @@ import { db } from "../../../firebase/firebase";
 import AddAsset from "./AddAsset";
 import AssetDetails from "./AssetDetails";
 import Modal from "../../../components/Modal/Modal";
-import { FiFilter, FiPlus } from "react-icons/fi";
+import { FiFilter, FiPlus, FiX } from "react-icons/fi";
 import { useAuth } from "../../../context/AuthContext";
 
 const ManageAsset = () => {
@@ -20,36 +20,40 @@ const ManageAsset = () => {
 
   const [categoryFilters, setCategoryFilters] = useState({});
   const [statusFilters, setStatusFilters] = useState({
-    "Active": false,
+    Active: false,
     "In Use": false,
     "Under Investigation": false,
     "In Repair": false,
-    "Borrowed": false,
-    "Broken": false,
-    "Disposed": false
+    Borrowed: false,
+    Broken: false,
+    Disposed: false,
   });
 
   const { profile } = useAuth();
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, "assets"), (querySnapshot) => {
-      const assetList = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setAssets(assetList);
-    }, (error) => {
-      console.error("Error in real-time fetching assets:", error);
-      setAssets([]);
-    });
+    const unsubscribe = onSnapshot(
+      collection(db, "assets"),
+      (querySnapshot) => {
+        const assetList = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setAssets(assetList);
+      },
+      (error) => {
+        console.error("Error in real-time fetching assets:", error);
+        setAssets([]);
+      }
+    );
 
     fetchCategories()
       .then((categoryData) => {
         const categoryMap = categoryData.reduce((acc, category) => {
           acc[category.id] = category.name;
-          setCategoryFilters(prev => ({
+          setCategoryFilters((prev) => ({
             ...prev,
-            [category.id]: false
+            [category.id]: false,
           }));
           return acc;
         }, {});
@@ -64,16 +68,16 @@ const ManageAsset = () => {
   }, []);
 
   const handleCategoryFilterChange = (categoryId) => {
-    setCategoryFilters(prev => ({
+    setCategoryFilters((prev) => ({
       ...prev,
-      [categoryId]: !prev[categoryId]
+      [categoryId]: !prev[categoryId],
     }));
   };
 
   const handleStatusFilterChange = (status) => {
-    setStatusFilters(prev => ({
+    setStatusFilters((prev) => ({
       ...prev,
-      [status]: !prev[status]
+      [status]: !prev[status],
     }));
   };
 
@@ -82,10 +86,13 @@ const ManageAsset = () => {
   };
 
   const resetFilters = () => {
-    const resetCategoryFilters = Object.keys(categoryFilters).reduce((acc, key) => {
-      acc[key] = false;
-      return acc;
-    }, {});
+    const resetCategoryFilters = Object.keys(categoryFilters).reduce(
+      (acc, key) => {
+        acc[key] = false;
+        return acc;
+      },
+      {}
+    );
 
     const resetStatusFilters = Object.keys(statusFilters).reduce((acc, key) => {
       acc[key] = false;
@@ -97,7 +104,9 @@ const ManageAsset = () => {
   };
 
   useEffect(() => {
-    document.querySelector('.table-wrapper')?.scrollTo({ top: 0, behavior: 'smooth' });
+    document
+      .querySelector(".table-wrapper")
+      ?.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentPage]);
 
   const filteredData = assets.filter((asset) => {
@@ -107,15 +116,26 @@ const ManageAsset = () => {
       asset.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       asset.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       asset.status?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      categories[asset.category]?.toLowerCase().includes(searchQuery.toLowerCase());
+      categories[asset.category]
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase());
 
-    const selectedCategories = Object.keys(categoryFilters).filter(key => categoryFilters[key]);
-    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(asset.category);
+    const selectedCategories = Object.keys(categoryFilters).filter(
+      (key) => categoryFilters[key]
+    );
+    const matchesCategory =
+      selectedCategories.length === 0 ||
+      selectedCategories.includes(asset.category);
 
-    const selectedStatuses = Object.keys(statusFilters).filter(key => statusFilters[key]);
-    const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(asset.status);
+    const selectedStatuses = Object.keys(statusFilters).filter(
+      (key) => statusFilters[key]
+    );
+    const matchesStatus =
+      selectedStatuses.length === 0 || selectedStatuses.includes(asset.status);
 
-    const isInDepartment = asset.department?.includes(profile?.department) || profile?.role === "Admin";
+    const isInDepartment =
+      asset.department?.includes(profile?.department) ||
+      profile?.role === "Admin";
 
     return matchesSearch && matchesCategory && matchesStatus && isInDepartment;
   });
@@ -125,6 +145,23 @@ const ManageAsset = () => {
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage
   );
+
+  const pageNumbersToShow = 5;
+  const halfPageRange = Math.floor(pageNumbersToShow / 2);
+
+  const getPageButtons = () => {
+    const startPage = Math.max(currentPage - halfPageRange, 1);
+    const endPage = Math.min(currentPage + halfPageRange, totalPages);
+
+    const pageNumbers = [];
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+
+    return pageNumbers;
+  };
+
+  const pageButtons = getPageButtons();
 
   const timeAgo = (date) => {
     const seconds = Math.floor((new Date() - date) / 1000);
@@ -141,151 +178,271 @@ const ManageAsset = () => {
     for (const [unit, value] of Object.entries(intervals)) {
       const count = Math.floor(seconds / value);
       if (count > 0) {
-        return `${count} ${unit}${count !== 1 ? 's' : ''} ago`;
+        return `${count} ${unit}${count !== 1 ? "s" : ""} ago`;
       }
     }
-    return 'just now';
-  }
+    return "just now";
+  };
 
   const activeFilterCount =
     Object.values(categoryFilters).filter(Boolean).length +
     Object.values(statusFilters).filter(Boolean).length;
 
   return (
-    <div className="table-container">
-      <div className="page-table-header">
-        <div className="header-top">
-          <h1 className="title">Asset List<span className="table-title-style">{filteredData.length}</span></h1>
+    <div className="flex flex-col m-4 w-[calc(100%-2rem)] h-[calc(100%-2rem)] max-h-[calc(100%-6rem)] rounded-lg shadow-2xl">
+      <div className="sticky top-0 flex-shrink-0 min-h-[5rem] rounded-lg bg-gray-600 text-white px-4 pt-8 pb-2">
+        <div className="flex flex-wrap items-center gap-2 mb-2 px-2">
+          <h1 className="flex-1 text-xl font-semibold order-1 mr-auto min-w-0">
+            Asset List
+            <span className="ml-4 text-gray-300">{filteredData.length}</span>
+          </h1>
           <input
             type="text"
-            className="search-bar"
+            className="order-2 min-w-[120px] max-w-[200px] flex-grow rounded-md border-none px-2 py-1 text-black"
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
 
           <button
-            className="filter-button"
+            className="order-3 ml-auto relative flex items-center justify-center rounded-md border border-gray-300 bg-gray-100 p-1.5 text-gray-700 transition hover:bg-gray-200"
             onClick={() => setShowFilterModal(true)}
           >
-            <FiFilter /> {activeFilterCount > 0 && <span className="filter-badge">{activeFilterCount}</span>}
+            <FiFilter className="text-lg" />
+            {activeFilterCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs text-white">
+                {activeFilterCount}
+              </span>
+            )}
           </button>
 
-          <button className="add-data-btn" onClick={() => setIsAddingAsset(true)}><FiPlus /> Add Asset</button>
+          <button
+            className="hidden sm:flex order-4 rounded-md bg-gray-800 px-3 py-1 text-white hover:bg-gray-900 items-center gap-1"
+            onClick={() => setIsAddingAsset(true)}
+          >
+            <FiPlus /> Add Asset
+          </button>
+
+          {/* Floating button for mobile */}
+          <button
+            onClick={() => setIsAddingAsset(true)}
+            className="fixed bottom-5 right-5 z-50 inline-flex items-center justify-center rounded-full bg-blue-600 p-4 text-white shadow-lg hover:bg-blue-700 sm:hidden"
+            aria-label="Add Asset"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+          </button>
         </div>
 
-        <table className="header-table">
+        <table className="w-full border-collapse text-white mt-5">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Category</th>
-              <th>Status</th>
-              <th>Cost</th>
-              <th>Updated</th>
+              <th className="w-[25%] text-start">Name</th>
+              <th className="hidden sm:table-cell w-[25%] text-start">
+                Category
+              </th>
+              <th className="w-[25%] text-start">Status</th>
+              <th className="hidden sm:table-cell w-[25%] text-start">
+                Updated
+              </th>
             </tr>
           </thead>
         </table>
       </div>
 
-      <div className="table-wrapper">
-        <table className="body-table">
+      <div className="flex-grow overflow-y-auto bg-white px-4 rounded-b-lg">
+        <table className="w-full border-collapse table-fixed">
           <tbody>
             {paginatedData.length > 0 ? (
               paginatedData.map((asset) => (
                 <tr key={asset.id} onClick={() => setSelectedAsset(asset)}>
-                  <td>{asset.id}</td>
-                  <td>{asset.name}</td>
-                  <td>{categories[asset.category] || "Unknown"}</td>
-                  <td>
-                    <span className={`status-indicator status-${asset.status?.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}></span>
+                  <td
+                    className={`w-[25%] border-b border-gray-300 py-2 truncate`}
+                  >
+                    {asset.name}
+                  </td>
+                  <td
+                    className={`w-[25%] border-b border-gray-300 py-2 truncate`}
+                  >
+                    {categories[asset.category] || "Unknown"}
+                  </td>
+                  <td
+                    className={`w-[25%] border-b border-gray-300 py-2 truncate`}
+                  >
+                    <span
+                      className={`status-indicator status-${
+                        asset.status?.toLowerCase().replace(/\s+/g, "-") ||
+                        "unknown"
+                      }`}
+                    ></span>
                     {asset.status}
                   </td>
-                  <td>Php {asset.cost}</td>
-                  <td>{asset.dateUpdated ? timeAgo(asset.dateUpdated.toDate()) : 'N/A'}</td>
+                  <td
+                    className={`w-[25%] border-b border-gray-300 py-2 truncate`}
+                  >
+                    {asset.dateUpdated
+                      ? timeAgo(asset.dateUpdated.toDate())
+                      : "N/A"}
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="3">No Asset found</td>
+                <td colSpan="4" className="px-3 py-6 text-center text-gray-500">
+                  No Asset found
+                </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
 
-      <div className="pagination-controls">
-        <button
-          disabled={currentPage === 1}
-          onClick={() => setCurrentPage(prev => prev - 1)}
-          className="pagination-button"
-        >
-          Prev
-        </button>
-
-        {Array.from({ length: totalPages }, (_, index) => index + 1).map(page => (
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="sticky bottom-0 mt-2 flex w-full items-center justify-center gap-2 rounded-b-lg bg-white py-2">
           <button
-            key={page}
-            onClick={() => setCurrentPage(page)}
-            className={`pagination-button ${currentPage === page ? 'active' : ''}`}
+            className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
           >
-            {page}
+            {"<<"}
           </button>
-        ))}
+          <button
+            className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+          >
+            {"<"}
+          </button>
 
-        <button
-          disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage(prev => prev + 1)}
-          className="pagination-button"
-        >
-          Next
-        </button>
-      </div>
+          {pageButtons.map((pageNum) => (
+            <button
+              key={pageNum}
+              className={`rounded border px-3 py-1 ${
+                pageNum === currentPage
+                  ? "border-blue-600 bg-blue-600 text-white"
+                  : "border-gray-300 hover:bg-gray-200"
+              }`}
+              onClick={() => setCurrentPage(pageNum)}
+            >
+              {pageNum}
+            </button>
+          ))}
 
+          <button
+            className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+          >
+            {">"}
+          </button>
+          <button
+            className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}
+          >
+            {">>"}
+          </button>
+        </div>
+      )}
+      
       {isAddingAsset && <AddAsset onClose={() => setIsAddingAsset(false)} />}
-      {selectedAsset && <AssetDetails assetDetails={selectedAsset} onClose={() => setSelectedAsset(null)} />}
+      {selectedAsset && (
+        <AssetDetails
+          assetDetails={selectedAsset}
+          onClose={() => setSelectedAsset(null)}
+        />
+      )}
 
       {showFilterModal && (
-        <Modal onClose={() => setShowFilterModal(false)} title="Filter Assets">
-          <div className="filter-modal-content">
-            <div className="filter-section">
-              <h3>Categories</h3>
-              <div className="filter-checkboxes">
-                {Object.entries(categories).map(([id, name]) => (
-                  <label key={id} className="filter-checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={categoryFilters[id] || false}
-                      onChange={() => handleCategoryFilterChange(id)}
-                    />
-                    {name}
-                  </label>
-                ))}
+        <div
+          className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center"
+          onClick={() => setShowFilterModal(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="bg-white rounded-lg shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-gray-700 text-white flex items-center justify-between py-4 px-6 rounded-t-lg">
+              <h3 className="text-lg font-semibold">Filter Assets</h3>
+              <FiX
+                className="cursor-pointer text-2xl p-1 rounded hover:bg-gray-500 transition-colors"
+                onClick={() => setShowFilterModal(false)}
+              />
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-6">
+              {/* Categories Filter */}
+              <div>
+                <h4 className="text-md font-medium mb-2">Categories</h4>
+                <div className="flex flex-wrap gap-4">
+                  {Object.entries(categories).map(([id, name]) => (
+                    <label key={id} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={categoryFilters[id] || false}
+                        onChange={() => handleCategoryFilterChange(id)}
+                      />
+                      {name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Status Filter */}
+              <div>
+                <h4 className="text-md font-medium mb-2">Status</h4>
+                <div className="flex flex-wrap gap-4">
+                  {Object.keys(statusFilters).map((status) => (
+                    <label
+                      key={status}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={statusFilters[status] || false}
+                        onChange={() => handleStatusFilterChange(status)}
+                      />
+                      {status}
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="filter-section">
-              <h3>Status</h3>
-              <div className="filter-checkboxes">
-                {Object.keys(statusFilters).map((status) => (
-                  <label key={status} className="filter-checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={statusFilters[status] || false}
-                      onChange={() => handleStatusFilterChange(status)}
-                    />
-                    {status}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="filter-modal-actions">
-              <button className="reset-filter-button" onClick={resetFilters}>Reset Filters</button>
-              <button className="apply-button" onClick={applyFilters}>Apply Filters</button>
+            {/* Footer Actions */}
+            <div className="flex justify-end items-center gap-4 p-6 border-t border-gray-200">
+              <button
+                className="text-gray-600 hover:text-gray-900 px-4 py-2 rounded border border-gray-300 hover:bg-gray-100 transition"
+                onClick={resetFilters}
+              >
+                Reset Filters
+              </button>
+              <button
+                className="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700 transition"
+                onClick={applyFilters}
+              >
+                Apply Filters
+              </button>
             </div>
           </div>
-        </Modal>
+        </div>
       )}
     </div>
   );

@@ -2,37 +2,37 @@ import { getDocs, collection, getDoc, setDoc, doc, deleteDoc, serverTimestamp } 
 import { db } from "./firebase";
 import { addActivityLog } from "./activtylogservices";
 
-const fetchTitles = async () => {
+const fetchPositions = async () => {
     try {
-        const querySnapshot = await getDocs(collection(db, "titles"));
+        const querySnapshot = await getDocs(collection(db, "positions"));
         return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
-        console.error("Error fetching titles:", error);
+        console.error("Error fetching positions:", error);
     }
 };
 
-const generateTitleID = async () => {
+const generatePositionID = async () => {
     try {
-        const querySnapshot = await getDocs(collection(db, "titles"));
-        const titleIds = querySnapshot.docs.map((doc) => doc.id);
+        const querySnapshot = await getDocs(collection(db, "positions"));
+        const positionIds = querySnapshot.docs.map((doc) => doc.id);
 
-        if (titleIds.length > 0) {
-            const highestID = Math.max(...titleIds.map((id) => parseInt(id.replace("T-", ""))));
-            return `T-${(highestID + 1).toString().padStart(5, "0")}`;
+        if (positionIds.length > 0) {
+            const highestID = Math.max(...positionIds.map((id) => parseInt(id.replace("P-", ""))));
+            return `P-${(highestID + 1).toString().padStart(5, "0")}`;
         } else {
-            return "T-00001";
+            return "P-00001";
         }
     } catch (error) {
-        console.error("Error generating title ID:", error);
-        return "T-00001";
+        console.error("Error generating position ID:", error);
+        return "P-00001";
     }
 };
 
-const addTitle = async (name, description, score, logby) => {
+const addPosition = async (name, description, score, logby) => {
     try {
-        const newTitleId = await generateTitleID();
+        const newPositionId = await generatePositionID();
 
-        await setDoc(doc(db, "titles", newTitleId), {
+        await setDoc(doc(db, "positions", newPositionId), {
             name,
             description,
             score,
@@ -40,48 +40,48 @@ const addTitle = async (name, description, score, logby) => {
             dateUpdated: serverTimestamp(),
         });
 
-        await addActivityLog(logby, "Add Title", `Title ID: ${newTitleId}`);
+        await addActivityLog(logby, "Add Position", `Position ID: ${newPositionId}`);
     } catch (error) {
-        console.error("Error adding title:", error);
+        console.error("Error adding position:", error);
         throw error;
     }
 };
 
-const updateTitle = async (selectedTitle, logby) => {
-    if (!selectedTitle) return;
+const updatePosition = async (selectedPosition, logby) => {
+    if (!selectedPosition) return;
 
     try {
-        await setDoc(doc(db, "titles", selectedTitle.id), {
-            name: selectedTitle.name,
-            description: selectedTitle.description,
-            score: selectedTitle.score,
+        await setDoc(doc(db, "positions", selectedPosition.id), {
+            name: selectedPosition.name,
+            description: selectedPosition.description,
+            score: selectedPosition.score,
             dateUpdated: serverTimestamp(),
         }, { merge: true });
 
-        await addActivityLog(logby, "Update Title", `Title ID: ${selectedTitle.id}`);
+        await addActivityLog(logby, "Update Position", `Position ID: ${selectedPosition.id}`);
     } catch (error) {
-        console.error("Error updating title:", error);
+        console.error("Error updating position:", error);
         throw error;
     }
 };
 
-const deleteTitle = async (titleId, logby) => {
-    if (!titleId) throw new Error("Title ID is required");
+const deletePosition = async (positionId, logby) => {
+    if (!positionId) throw new Error("Position ID is required");
 
     try {
-        await deleteDoc(doc(db, "titles", titleId));
-        await addActivityLog(logby, "Delete Title", `Title ID: ${titleId}`);
+        await deleteDoc(doc(db, "positions", positionId));
+        await addActivityLog(logby, "Delete Position", `Position ID: ${positionId}`);
     } catch (error) {
-        console.error("Error deleting title:", error);
+        console.error("Error deleting position:", error);
         throw error;
     }
 };
 
-const fetchTitleById = async (titleId) => {
-    if (!titleId) return { name: "", score: 0 };
+const fetchPositionById = async (positionId) => {
+    if (!positionId) return { name: "", score: 0 };
 
     try {
-        const docRef = doc(db, "titles", titleId);
+        const docRef = doc(db, "positions", positionId);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
@@ -91,13 +91,13 @@ const fetchTitleById = async (titleId) => {
                 score: data.score || 0,
             };
         } else {
-            console.warn(`No title found for ID: ${titleId}`);
+            console.warn(`No position found for ID: ${positionId}`);
             return { name: "", score: 0 };
         }
     } catch (err) {
-        console.error("Error fetching title:", err);
+        console.error("Error fetching position:", err);
         return { name: "", score: 0 };
     }
 };
 
-export { fetchTitles, addTitle, updateTitle, deleteTitle, fetchTitleById };
+export { fetchPositions, addPosition, updatePosition, deletePosition, fetchPositionById };

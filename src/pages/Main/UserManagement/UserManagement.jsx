@@ -4,7 +4,7 @@ import { db } from "../../../firebase/firebase";
 import AddUser from "./AddUser";
 import UserDetails from "../UserManagement/UserDetails";
 import Modal from "../../../components/Modal/Modal";
-import { FiFilter, FiPlus } from "react-icons/fi";
+import { FiFilter, FiPlus, FiX } from "react-icons/fi";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -15,11 +15,24 @@ const UserManagement = () => {
   const [showFilterModal, setShowFilterModal] = useState(false);
 
   const [roleFilters, setRoleFilters] = useState({
-    Admin: false,
-    "Department Head": false,
-    Technician: false,
-    User: false,
+    system_administrator: false,
+    operational_administrator: false,
+    department_manager: false,
+    finance: false,
+    maintenance_head: false,
+    maintenance_technician: false,
+    reporter: false,
   });
+
+  const ROLE_LABELS = {
+    system_administrator: "System Administrator",
+    operational_administrator: "Operational Administrator",
+    department_manager: "Department Manager",
+    finance: "Finance",
+    maintenance_head: "Maintenance Head",
+    maintenance_technician: "Maintenance Technician",
+    reporter: "Reporter",
+  };
 
   const [statusFilters, setStatusFilters] = useState({
     Available: false,
@@ -53,7 +66,7 @@ const UserManagement = () => {
       collection(db, "titles"),
       (querySnapshot) => {
         const titlesMap = {};
-        querySnapshot.docs.forEach(doc => {
+        querySnapshot.docs.forEach((doc) => {
           titlesMap[doc.id] = doc.data().name;
         });
         setTitles(titlesMap);
@@ -65,7 +78,6 @@ const UserManagement = () => {
     );
     return () => unsubscribe();
   }, []);
-
 
   const handleRoleFilterChange = (role) => {
     setRoleFilters((prev) => ({
@@ -82,16 +94,22 @@ const UserManagement = () => {
   };
 
   const resetFilters = () => {
-    const resetRoles = Object.keys(roleFilters).reduce((acc, key) => {
-      acc[key] = false;
-      return acc;
-    }, {});
-    const resetStatus = Object.keys(statusFilters).reduce((acc, key) => {
-      acc[key] = false;
-      return acc;
-    }, {});
-    setRoleFilters(resetRoles);
-    setStatusFilters(resetStatus);
+    setRoleFilters(
+      Object.keys(roleFilters).reduce((acc, key) => {
+        acc[key] = false;
+        return acc;
+      }, {})
+    );
+    setStatusFilters(
+      Object.keys(statusFilters).reduce((acc, key) => {
+        acc[key] = false;
+        return acc;
+      }, {})
+    );
+  };
+
+  const applyFilters = () => {
+    setShowFilterModal(false);
   };
 
   const timeAgo = (date) => {
@@ -126,10 +144,15 @@ const UserManagement = () => {
           value.toLowerCase().includes(searchQuery.toLowerCase())
         );
 
-    const selectedRoles = Object.keys(roleFilters).filter((r) => roleFilters[r]);
-    const matchesRole = selectedRoles.length === 0 || selectedRoles.includes(user.role);
+    const selectedRoles = Object.keys(roleFilters).filter(
+      (r) => roleFilters[r]
+    );
+    const matchesRole =
+      selectedRoles.length === 0 || selectedRoles.includes(user.role);
 
-    const selectedStatuses = Object.keys(statusFilters).filter((s) => statusFilters[s]);
+    const selectedStatuses = Object.keys(statusFilters).filter(
+      (s) => statusFilters[s]
+    );
     const matchesStatus =
       selectedStatuses.length === 0 || selectedStatuses.includes(user.status);
 
@@ -161,154 +184,267 @@ const UserManagement = () => {
   const pageButtons = getPageButtons();
 
   return (
-    <div className="table-container">
-      <div className="page-table-header">
-        <div className="header-top">
-          <h1 className="title">
-            User List<span className="table-title-style">{filteredUsers.length}</span>
+    <div className="flex flex-col m-4 w-[calc(100%-2rem)] h-[calc(100%-2rem)] max-h-[calc(100%-6rem)] rounded-lg shadow-2xl">
+      <div className="sticky top-0 flex-shrink-0 min-h-[5rem] rounded-lg bg-gray-600 text-white px-4 pt-8 pb-2">
+        <div className="flex flex-wrap items-center gap-2 mb-2 px-2">
+          <h1 className="flex-1 text-xl font-semibold order-1 mr-auto min-w-0">
+            User List
+            <span className="ml-4 text-gray-300">{filteredUsers.length}</span>
           </h1>
+
           <input
             type="text"
-            className="search-bar"
+            className="order-2 min-w-[120px] max-w-[200px] flex-grow rounded-md border-none px-2 py-1 text-black"
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <button className="filter-button" onClick={() => setShowFilterModal(true)}>
-            <FiFilter /> {activeFilterCount > 0 && <span className="filter-badge">{activeFilterCount}</span>}
+
+          <button
+            onClick={() => setShowFilterModal(true)}
+            className="order-3 ml-auto relative flex items-center justify-center rounded-md border border-gray-300 bg-gray-100 p-1.5 text-gray-700 transition hover:bg-gray-200"
+            aria-label="Filter"
+          >
+            <FiFilter className="text-lg" />
+            {activeFilterCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs text-white">
+                {activeFilterCount}
+              </span>
+            )}
           </button>
-          <button className="add-data-btn" onClick={() => setIsAddingUser(true)}>
+
+          <button
+            onClick={() => setIsAddingUser(true)}
+            className="hidden sm:flex order-4 rounded-md bg-gray-800 px-3 py-1 text-white hover:bg-gray-900 items-center gap-1"
+          >
             <FiPlus /> Add User
+          </button>
+
+          {/* Floating button for mobile */}
+          <button
+            onClick={() => setIsAddingUser(true)}
+            className="fixed bottom-5 right-5 z-50 inline-flex items-center justify-center rounded-full bg-blue-600 p-4 text-white shadow-lg hover:bg-blue-700 sm:hidden"
+            aria-label="Add User"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
           </button>
         </div>
 
-        <table className="header-table">
+        <table className="w-full border-collapse text-white mt-5">
           <thead>
             <tr>
-              <th>UID</th>
-              <th>Name</th>
-              <th>Position</th>
-              <th>Role</th>
-              <th>Updated</th>
-              <th>Created</th>
+              <th className="w-[25%] text-start">Name</th>
+              <th className="w-[20%] text-start">Position</th>
+              <th className="w-[20%] text-start">Role</th>
+              <th className="w-[17.5%] text-start">Updated</th>
+              <th className="hidden sm:table-cell w-[17.5%] text-start">
+                Created
+              </th>
             </tr>
           </thead>
         </table>
       </div>
 
-      <div className="table-wrapper">
-        <table className="body-table">
+      <div className="flex-grow overflow-y-auto bg-white px-4 rounded-b-lg">
+        <table className="w-full border-collapse table-fixed">
           <tbody>
             {paginatedData.length > 0 ? (
               paginatedData.map((user) => (
-                <tr key={user.id} onClick={() => setSelectedUser(user)}>
-                  <td>{user.id}</td>
-                  <td>{user.firstName} {user.lastName}</td>
-                  <td>{titles[user.title] || user.title}</td>
-                  <td>{user.role}</td>
-                  <td>{user.dateUpdated ? timeAgo(user.dateUpdated.toDate()) : "N/A"}</td>
-                  <td>{user.dateCreated ? timeAgo(user.dateCreated.toDate()) : "N/A"}</td>
+                <tr
+                  key={user.id}
+                  onClick={() => setSelectedUser(user)}
+                  className="cursor-pointer hover:bg-gray-100"
+                >
+                  <td
+                    className={`w-[25%] border-b border-gray-300 py-2 truncate`}
+                  >
+                    {user.firstName} {user.lastName}
+                  </td>
+                  <td
+                    className={`w-[20%] border-b border-gray-300 py-2 truncate`}
+                  >
+                    {titles[user.title] || user.title}
+                  </td>
+                  <td
+                    className={`w-[20%] border-b border-gray-300 py-2 truncate`}
+                  >
+                    {ROLE_LABELS[user.role] || user.role}
+                  </td>
+                  <td
+                    className={`w-[17.5%] border-b border-gray-300 py-2 truncate`}
+                  >
+                    {user.dateUpdated
+                      ? timeAgo(user.dateUpdated.toDate())
+                      : "N/A"}
+                  </td>
+                  <td
+                    className={`hidden sm:table-cell w-[17.5%] border-b border-gray-300 py-2 truncate`}
+                  >
+                    {user.dateCreated
+                      ? timeAgo(user.dateCreated.toDate())
+                      : "N/A"}
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="6">No Users found</td>
+                <td colSpan="5" className="px-3 py-6 text-center text-gray-500">
+                  No Users found
+                </td>
               </tr>
             )}
           </tbody>
         </table>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="sticky bottom-0 mt-2 flex w-full items-center justify-center gap-2 rounded-b-lg bg-white py-2">
+            <button
+              className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+            >
+              {"<<"}
+            </button>
+            <button
+              className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              {"<"}
+            </button>
+
+            {pageButtons.map((pageNum) => (
+              <button
+                key={pageNum}
+                className={`rounded border px-3 py-1 ${
+                  pageNum === currentPage
+                    ? "border-blue-600 bg-blue-600 text-white"
+                    : "border-gray-300 hover:bg-gray-200"
+                }`}
+                onClick={() => setCurrentPage(pageNum)}
+              >
+                {pageNum}
+              </button>
+            ))}
+
+            <button
+              className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              {">"}
+            </button>
+            <button
+              className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+            >
+              {">>"}
+            </button>
+          </div>
+        )}
       </div>
 
-      <div className="pagination-controls">
-        <button
-          disabled={currentPage === 1}
-          onClick={() => setCurrentPage((prev) => prev - 1)}
-          className="pagination-button"
-        >
-          Prev
-        </button>
-
-        {currentPage > halfPageRange + 1 && (
-          <>
-            <button onClick={() => setCurrentPage(1)} className="pagination-button">1</button>
-            <span>...</span>
-          </>
-        )}
-
-        {pageButtons.map((page) => (
-          <button
-            key={page}
-            onClick={() => setCurrentPage(page)}
-            className={`pagination-button ${currentPage === page ? "active" : ""}`}
-          >
-            {page}
-          </button>
-        ))}
-
-        {currentPage < totalPages - halfPageRange && (
-          <>
-            <span>...</span>
-            <button onClick={() => setCurrentPage(totalPages)} className="pagination-button">{totalPages}</button>
-          </>
-        )}
-
-        <button
-          disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage((prev) => prev + 1)}
-          className="pagination-button"
-        >
-          Next
-        </button>
-      </div>
+      {selectedUser && <UserDetails user={selectedUser} titles={titles} />}
 
       {isAddingUser && <AddUser onClose={() => setIsAddingUser(false)} />}
-      {selectedUser && <UserDetails userDetails={selectedUser} onClose={() => setSelectedUser(null)} />}
 
       {showFilterModal && (
-        <Modal onClose={() => setShowFilterModal(false)} title="Filter Users">
-          <div className="filter-modal-content">
-            <div className="filter-section">
-              <h3>Roles</h3>
-              <div className="filter-checkboxes">
-                {Object.keys(roleFilters).map((role) => (
-                  <label key={role} className="filter-checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={roleFilters[role]}
-                      onChange={() => handleRoleFilterChange(role)}
-                    />
-                    {role}
-                  </label>
-                ))}
+        <div
+          className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center"
+          onClick={() => setShowFilterModal(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-gray-700 text-white flex items-center justify-between py-4 px-6 rounded-t-lg">
+              <h3 className="text-lg font-semibold">Filter Users</h3>
+              <FiX
+                className="cursor-pointer text-2xl p-1 rounded hover:bg-gray-500 transition-colors"
+                onClick={() => setShowFilterModal(false)}
+              />
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-6">
+              {/* Role Filters */}
+              <div>
+                <h4 className="text-md font-medium mb-2">Roles</h4>
+                <div className="flex flex-wrap gap-4">
+                  {Object.keys(roleFilters).map((role) => (
+                    <label
+                      key={role}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={roleFilters[role]}
+                        onChange={() => handleRoleFilterChange(role)}
+                        className="h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      {ROLE_LABELS[role] || role}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Status Filters */}
+              <div>
+                <h4 className="text-md font-medium mb-2">Status</h4>
+                <div className="flex flex-wrap gap-4">
+                  {Object.keys(statusFilters).map((status) => (
+                    <label
+                      key={status}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={statusFilters[status]}
+                        onChange={() => handleStatusFilterChange(status)}
+                        className="h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      {status}
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="filter-section">
-              <h3>Status</h3>
-              <div className="filter-checkboxes">
-                {Object.keys(statusFilters).map((status) => (
-                  <label key={status} className="filter-checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={statusFilters[status]}
-                      onChange={() => handleStatusFilterChange(status)}
-                    />
-                    {status}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="filter-modal-actions">
-              <button className="reset-filter-button" onClick={resetFilters}>
+            {/* Footer */}
+            <div className="flex justify-end items-center gap-4 p-6 border-t border-gray-200">
+              <button
+                className="text-gray-600 hover:text-gray-900 px-4 py-2 rounded border border-gray-300 hover:bg-gray-100 transition"
+                onClick={resetFilters}
+              >
                 Reset Filters
               </button>
-              <button className="apply-button" onClick={() => setShowFilterModal(false)}>
+              <button
+                className="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700 transition"
+                onClick={applyFilters}
+              >
                 Apply Filters
               </button>
             </div>
           </div>
-        </Modal>
+        </div>
       )}
     </div>
   );

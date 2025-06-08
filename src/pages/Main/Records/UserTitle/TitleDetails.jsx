@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { updateTitle, deleteTitle } from "../../../../firebase/usertitleservices";
+import { updatePosition, deletePosition } from "../../../../firebase/usertitleservices";
 import { useAuth } from "../../../../context/AuthContext";
 import ModalDetails from "../../../../components/Modal/ModalDetails";
 import MessageModal from "../../../../components/Modal/MessageModal";
@@ -25,7 +25,7 @@ const TitleDetails = ({ titleDetails, onClose }) => {
 
         setIsLoading(true);
         try {
-            await updateTitle(selectedTitle, profile?.id);
+            await updatePosition(selectedTitle, profile?.id);
             setMessage("Title details updated successfully!");
         } catch (error) {
             console.error("Error updating title:", error);
@@ -43,7 +43,7 @@ const TitleDetails = ({ titleDetails, onClose }) => {
 
         setIsLoading(true);
         try {
-            await deleteTitle(selectedTitle.id, profile?.id);
+            await deletePosition(selectedTitle.id, profile?.id);
             setMessage("Title was deleted successfully!");
         } catch (error) {
             console.error("Error deleting title:", error);
