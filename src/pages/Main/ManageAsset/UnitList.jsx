@@ -1,24 +1,24 @@
 import { useState, useEffect } from "react";
-import { fetchCategories } from "../../../firebase/categoryservices";
+import { fetchDepartments } from "../../../firebase/departmentservices";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../../firebase/firebase";
-import AddAsset from "./AddAsset";
-import AssetDetails from "./AssetDetails";
-import Modal from "../../../components/Modal/Modal";
-import { FiFilter, FiPlus, FiX } from "react-icons/fi";
+import AddAssetUnit from "./AddAssetUnit";
+import AssetUnitDetails from "./AssetUnitDetails";
+import { FiFilter, FiPlus, FiSearch, FiX } from "react-icons/fi";
 import { useAuth } from "../../../context/AuthContext";
 
-const ManageAsset = () => {
-  const [assets, setAssets] = useState([]);
-  const [categories, setCategories] = useState({});
+const UnitList = ({ assetDetails }) => {
+  const [units, setUnits] = useState([]);
+  const [departments, setDepartments] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedUnit, setSelectedUnit] = useState(null);
   const [selectedAsset, setSelectedAsset] = useState(null);
-  const [isAddingAsset, setIsAddingAsset] = useState(false);
+  const [isAddingUnit, setIsAddingUnit] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 20;
 
-  const [categoryFilters, setCategoryFilters] = useState({});
+  const [departmentFilters, setDepartmentFilters] = useState({});
   const [statusFilters, setStatusFilters] = useState({
     Active: false,
     "In Use": false,
@@ -32,45 +32,52 @@ const ManageAsset = () => {
   const { profile } = useAuth();
 
   useEffect(() => {
+    if (assetDetails) {
+      setSelectedAsset(assetDetails);
+      console.log("Selected Asset:", assetDetails);
+    }
+  }, [assetDetails]);
+
+  useEffect(() => {
     const unsubscribe = onSnapshot(
-      collection(db, "assets"),
+      collection(db, "units"),
       (querySnapshot) => {
-        const assetList = querySnapshot.docs.map((doc) => ({
+        const unitList = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
-        setAssets(assetList);
+        setUnits(unitList);
       },
       (error) => {
-        console.error("Error in real-time fetching assets:", error);
-        setAssets([]);
+        console.error("Error in real-time fetching units:", error);
+        setUnits([]);
       }
     );
 
-    fetchCategories()
-      .then((categoryData) => {
-        const categoryMap = categoryData.reduce((acc, category) => {
-          acc[category.id] = category.name;
-          setCategoryFilters((prev) => ({
+    fetchDepartments()
+      .then((departmentData) => {
+        const departmentMap = departmentData.reduce((acc, department) => {
+          acc[department.id] = department.name;
+          setDepartmentFilters((prev) => ({
             ...prev,
-            [category.id]: false,
+            [department.id]: false,
           }));
           return acc;
         }, {});
-        setCategories(categoryMap);
+        setDepartments(departmentMap);
       })
       .catch((error) => {
-        console.error("Error fetching category:", error);
-        setCategories({});
+        console.error("Error fetching department:", error);
+        setDepartments({});
       });
 
     return () => unsubscribe();
   }, []);
 
-  const handleCategoryFilterChange = (categoryId) => {
-    setCategoryFilters((prev) => ({
+  const handleDepartmentFilterChange = (departmentId) => {
+    setDepartmentFilters((prev) => ({
       ...prev,
-      [categoryId]: !prev[categoryId],
+      [departmentId]: !prev[departmentId],
     }));
   };
 
@@ -86,7 +93,7 @@ const ManageAsset = () => {
   };
 
   const resetFilters = () => {
-    const resetCategoryFilters = Object.keys(categoryFilters).reduce(
+    const resetDepartmentFilters = Object.keys(departmentFilters).reduce(
       (acc, key) => {
         acc[key] = false;
         return acc;
@@ -99,7 +106,7 @@ const ManageAsset = () => {
       return acc;
     }, {});
 
-    setCategoryFilters(resetCategoryFilters);
+    setDepartmentFilters(resetDepartmentFilters);
     setStatusFilters(resetStatusFilters);
   };
 
@@ -109,35 +116,39 @@ const ManageAsset = () => {
       ?.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentPage]);
 
-  const filteredData = assets.filter((asset) => {
+  const filteredData = units.filter((unit) => {
     const matchesSearch =
       searchQuery === "" ||
-      asset.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      asset.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      asset.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      asset.status?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      categories[asset.category]
+      unit.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      unit.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      unit.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      unit.status?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      departments[unit.department]
         ?.toLowerCase()
         .includes(searchQuery.toLowerCase());
 
-    const selectedCategories = Object.keys(categoryFilters).filter(
-      (key) => categoryFilters[key]
+    const selectedDepartments = Object.keys(departmentFilters).filter(
+      (key) => departmentFilters[key]
     );
-    const matchesCategory =
-      selectedCategories.length === 0 ||
-      selectedCategories.includes(asset.category);
+
+    const matchesSelectedAsset =
+      !selectedAsset || unit.asset === selectedAsset.id;
+
+    const matchesDepartment =
+      selectedDepartments.length === 0 ||
+      selectedDepartments.includes(unit.department);
 
     const selectedStatuses = Object.keys(statusFilters).filter(
       (key) => statusFilters[key]
     );
     const matchesStatus =
-      selectedStatuses.length === 0 || selectedStatuses.includes(asset.status);
+      selectedStatuses.length === 0 || selectedStatuses.includes(unit.status);
 
     const isInDepartment =
-      asset.department?.includes(profile?.department) ||
-      profile?.role === "Admin";
+      unit.department?.includes(profile?.department) ||
+      profile?.role === "system_administrator" || "operational_administrator";
 
-    return matchesSearch && matchesCategory && matchesStatus && isInDepartment;
+    return matchesSearch && matchesDepartment && matchesStatus && isInDepartment && matchesSelectedAsset;
   });
 
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
@@ -185,24 +196,27 @@ const ManageAsset = () => {
   };
 
   const activeFilterCount =
-    Object.values(categoryFilters).filter(Boolean).length +
+    Object.values(departmentFilters).filter(Boolean).length +
     Object.values(statusFilters).filter(Boolean).length;
 
   return (
-    <div className="flex flex-col m-4 w-[calc(100%-2rem)] h-[calc(100%-2rem)] max-h-[calc(100%-6rem)] rounded-lg shadow-2xl">
-      <div className="sticky top-0 flex-shrink-0 min-h-[5rem] rounded-lg bg-gray-600 text-white px-4 pt-8 pb-2">
-        <div className="flex flex-wrap items-center gap-2 mb-2 px-2">
+    <>
+      <div className="sticky top-0 flex-shrink-0 min-h-[5rem] border-t-2 border-t-gray-200 mt-2">
+        <div className="flex flex-wrap items-center gap-2 mt-2 mb-2 px-2">
           <h1 className="flex-1 text-xl font-semibold order-1 mr-auto min-w-0">
-            Asset List
+            LIST OF UNITS
             <span className="ml-4 text-gray-300">{filteredData.length}</span>
           </h1>
-          <input
-            type="text"
-            className="order-2 min-w-[120px] max-w-[200px] flex-grow rounded-md border-none px-2 py-1 text-black"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <div className="order-2 min-w-[120px] max-w-[200px] flex items-center flex-grow rounded-md border-none px-2 py-1 text-black bg-gray-200">
+            <FiSearch className="text-gray-500 mr-2" />
+            <input
+              type="text"
+              className="w-full bg-transparent outline-none"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
 
           <button
             className="order-3 ml-auto relative flex items-center justify-center rounded-md border border-gray-300 bg-gray-100 p-1.5 text-gray-700 transition hover:bg-gray-200"
@@ -218,16 +232,16 @@ const ManageAsset = () => {
 
           <button
             className="hidden sm:flex order-4 rounded-md bg-gray-800 px-3 py-1 text-white hover:bg-gray-900 items-center gap-1"
-            onClick={() => setIsAddingAsset(true)}
+            onClick={() => setIsAddingUnit(true)}
           >
-            <FiPlus /> Add Asset
+            <FiPlus /> Add Unit
           </button>
 
           {/* Floating button for mobile */}
           <button
-            onClick={() => setIsAddingAsset(true)}
+            onClick={() => setIsAddingUnit(true)}
             className="fixed bottom-5 right-5 z-50 inline-flex items-center justify-center rounded-full bg-blue-600 p-4 text-white shadow-lg hover:bg-blue-700 sm:hidden"
-            aria-label="Add Asset"
+            aria-label="Add Unit"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -246,15 +260,15 @@ const ManageAsset = () => {
           </button>
         </div>
 
-        <table className="w-full border-collapse text-white mt-5">
-          <thead>
+        <table className="w-full border-collapse mt-5 bg-gray-100">
+          <thead className="bg-gray-200">
             <tr>
-              <th className="w-[25%] text-start">Name</th>
-              <th className="hidden sm:table-cell w-[25%] text-start">
-                Category
+              <th className="w-[25%] text-start p-2">Unit Number</th>
+              <th className="hidden sm:table-cell w-[25%] text-start p-2">
+                Department
               </th>
-              <th className="w-[25%] text-start">Status</th>
-              <th className="hidden sm:table-cell w-[25%] text-start">
+              <th className="w-[25%] text-start p-2">Status</th>
+              <th className="hidden sm:table-cell w-[25%] text-start p-2">
                 Updated
               </th>
             </tr>
@@ -266,34 +280,34 @@ const ManageAsset = () => {
         <table className="w-full border-collapse table-fixed">
           <tbody>
             {paginatedData.length > 0 ? (
-              paginatedData.map((asset) => (
-                <tr key={asset.id} onClick={() => setSelectedAsset(asset)}>
+              paginatedData.map((unit) => (
+                <tr key={unit.id} onClick={() => setSelectedUnit(unit)}>
                   <td
                     className={`w-[25%] border-b border-gray-300 py-2 truncate`}
                   >
-                    {asset.name}
+                    {unit.unitNumber}
                   </td>
                   <td
                     className={`w-[25%] border-b border-gray-300 py-2 truncate`}
                   >
-                    {categories[asset.category] || "Unknown"}
+                    {departments[unit.department] || (unit.department === "on_stock" ? "Inventory - On Stock" : "Unknown")}
                   </td>
                   <td
                     className={`w-[25%] border-b border-gray-300 py-2 truncate`}
                   >
                     <span
                       className={`status-indicator status-${
-                        asset.status?.toLowerCase().replace(/\s+/g, "-") ||
+                        unit.status?.toLowerCase().replace(/\s+/g, "-") ||
                         "unknown"
                       }`}
                     ></span>
-                    {asset.status}
+                    {unit.status}
                   </td>
                   <td
                     className={`w-[25%] border-b border-gray-300 py-2 truncate`}
                   >
-                    {asset.dateUpdated
-                      ? timeAgo(asset.dateUpdated.toDate())
+                    {unit.dateUpdated
+                      ? timeAgo(unit.dateUpdated.toDate())
                       : "N/A"}
                   </td>
                 </tr>
@@ -301,7 +315,7 @@ const ManageAsset = () => {
             ) : (
               <tr>
                 <td colSpan="4" className="px-3 py-6 text-center text-gray-500">
-                  No Asset found
+                  No Unit found
                 </td>
               </tr>
             )}
@@ -357,12 +371,12 @@ const ManageAsset = () => {
           </button>
         </div>
       )}
-      
-      {isAddingAsset && <AddAsset onClose={() => setIsAddingAsset(false)} />}
-      {selectedAsset && (
-        <AssetDetails
-          assetDetails={selectedAsset}
-          onClose={() => setSelectedAsset(null)}
+
+      {isAddingUnit && <AddAssetUnit assetDetails={selectedAsset} onClose={() => setIsAddingUnit(false)} />}
+      {selectedUnit && (
+        <AssetUnitDetails
+          unitDetails={selectedUnit}
+          onClose={() => setSelectedUnit(null)}
         />
       )}
 
@@ -379,7 +393,7 @@ const ManageAsset = () => {
           >
             {/* Header */}
             <div className="bg-gray-700 text-white flex items-center justify-between py-4 px-6 rounded-t-lg">
-              <h3 className="text-lg font-semibold">Filter Assets</h3>
+              <h3 className="text-lg font-semibold">Filter Units</h3>
               <FiX
                 className="cursor-pointer text-2xl p-1 rounded hover:bg-gray-500 transition-colors"
                 onClick={() => setShowFilterModal(false)}
@@ -388,16 +402,16 @@ const ManageAsset = () => {
 
             {/* Body */}
             <div className="p-6 space-y-6">
-              {/* Categories Filter */}
+              {/* Departments Filter */}
               <div>
-                <h4 className="text-md font-medium mb-2">Categories</h4>
+                <h4 className="text-md font-medium mb-2">Departments</h4>
                 <div className="flex flex-wrap gap-4">
-                  {Object.entries(categories).map(([id, name]) => (
+                  {Object.entries(departments).map(([id, name]) => (
                     <label key={id} className="flex items-center gap-2 text-sm">
                       <input
                         type="checkbox"
-                        checked={categoryFilters[id] || false}
-                        onChange={() => handleCategoryFilterChange(id)}
+                        checked={departmentFilters[id] || false}
+                        onChange={() => handleDepartmentFilterChange(id)}
                       />
                       {name}
                     </label>
@@ -444,8 +458,8 @@ const ManageAsset = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
-export default ManageAsset;
+export default UnitList;

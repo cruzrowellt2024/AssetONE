@@ -1,6 +1,18 @@
 import { getDocs, collection, setDoc, doc, deleteDoc, serverTimestamp, orderBy, query } from "firebase/firestore";
 import { db } from "./firebase";
 
+const getDeviceInfo = () => {
+    const ua = navigator.userAgent;
+
+    if (/windows/i.test(ua)) return "Windows";
+    if (/mac/i.test(ua)) return "MacOS";
+    if (/linux/i.test(ua)) return "Linux";
+    if (/android/i.test(ua)) return "Android";
+    if (/iphone|ipad/i.test(ua)) return "iOS";
+
+    return "Unknown Device";
+};
+
 const fetchActivityLogs = async () => {
     try {
         const q = query(
@@ -40,11 +52,13 @@ const addActivityLog = async (user, action, remarks = "") => {
     
     try {
         const newLogID = await generateActivityLogID();
+        const deviceInfo = getDeviceInfo();
 
         await setDoc(doc(db, "activity_log", newLogID), {
             user,
             action,
             remarks,
+            device: deviceInfo,
             timestamp: serverTimestamp()
         });
     } catch (error) {

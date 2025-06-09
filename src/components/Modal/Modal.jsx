@@ -25,15 +25,29 @@ const Modal = ({ children, onClose, title, closeOnBackdropClick = true }) => {
   }, []);
 
   return (
-    <div className="modal-backdrop" onClick={handleBackdropClick}>
-      <div className="modal-container" role="dialog" aria-labelledby="modal-title" tabIndex="-1" style={{maxWidth:"300px"}}>
-        <div className="modal-headers">
-          <h2 id="modal-title">{title}</h2>
-          <button className="modal-close-button" onClick={onClose} aria-label="Close">
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+      onClick={handleBackdropClick}
+    >
+      <div
+        className="bg-white rounded-lg shadow-lg overflow-hidden max-w-sm w-full"
+        role="dialog"
+        aria-labelledby="modal-title"
+        tabIndex="-1"
+      >
+        <div className="flex justify-between items-center p-4 border-b">
+          <h2 id="modal-title" className="text-lg font-semibold text-gray-800">
+            {title}
+          </h2>
+          <button
+            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+            onClick={onClose}
+            aria-label="Close"
+          >
             &times;
           </button>
         </div>
-        <div className="modal-contents">{children}</div>
+        <div className="p-4 text-gray-700">{children}</div>
       </div>
     </div>
   );

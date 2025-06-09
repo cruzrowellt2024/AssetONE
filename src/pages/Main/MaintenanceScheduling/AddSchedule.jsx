@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { addSchedule } from "../../../firebase/maintenancescheduleservices";
-import { fetchAssets } from "../../../firebase/assetservices";
+import { fetchUnits } from "../../../firebase/assetunitservices";
 import { Timestamp } from "firebase/firestore";
 import { fetchUsers } from "../../../firebase/userservices";
 import { useAuth } from "../../../context/AuthContext";
@@ -117,7 +117,7 @@ const AddSchedule = ({ onClose }) => {
 
   const getAssets = async () => {
     try {
-      const assetData = await fetchAssets();
+      const assetData = await fetchUnits();
       const departmentId = scheduleDepartment || profile?.department;
       const filteredAssets = assetData.filter(
         (asset) => asset.department === departmentId

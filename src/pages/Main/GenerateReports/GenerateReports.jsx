@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { fetchDynamicReport } from "../../../firebase/generatereportservices";
-import Modal from "../../../components/Modal/Modal";
 import { FiArrowLeft, FiX } from "react-icons/fi";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -681,11 +680,19 @@ const GenerateReports = () => {
                   onChange={(e) => setSelectedRole(e.target.value)}
                 >
                   <option value="">-- Select Role --</option>
-                  <option value="All">All Users</option>
-                  <option value="Admin">Administrator</option>
-                  <option value="Department Manager">Department Manager</option>
-                  <option value="Technician">Technician</option>
-                  <option value="Reporter">Reporter</option>
+                  <option value="system_administrator">
+                    System Administrator
+                  </option>
+                  <option value="operational_administrator">
+                    Operational Administrator
+                  </option>
+                  <option value="department_manager">Department Manager</option>
+                  <option value="finance">Finance</option>
+                  <option value="maintenance_head">Maintenance Head</option>
+                  <option value="maintenance_technician">
+                    Maintenance Technician
+                  </option>
+                  <option value="reporter">Reporter</option>
                 </select>
               </div>
             </div>

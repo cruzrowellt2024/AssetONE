@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { updateSchedule, deleteSchedule, addSchedule } from "../../../firebase/maintenancescheduleservices";
-import { fetchAssetById, fetchAssets, updateAsset } from "../../../firebase/assetservices";
+import { fetchUnitById, fetchUnits, updateUnit } from "../../../firebase/assetunitservices";
 import { fetchUsers } from "../../../firebase/userservices";
 import { useAuth } from "../../../context/AuthContext";
 import { FiThumbsUp, FiArrowLeft, FiCheckSquare, FiTrash } from "react-icons/fi";
@@ -84,7 +84,7 @@ const MaintenanceScheduleDetails = ({ scheduleDetails, onClose }) => {
 
     const getAssets = async () => {
         try {
-            const assetData = await fetchAssets();
+            const assetData = await fetchUnits();
             setAssets(assetData || []);
             const assetLookup = assetData.reduce((map, asset) => {
                 map[asset.id] = asset.name;
@@ -203,7 +203,7 @@ const MaintenanceScheduleDetails = ({ scheduleDetails, onClose }) => {
                 : [selectedSchedule.assets];
 
             for (const assetId of assetIds) {
-                const assetData = await fetchAssetById(assetId);
+                const assetData = await fetchUnitById(assetId);
                 if (!assetData) {
                     throw new Error(`Asset not found: ${assetId}`);
                 }
@@ -213,7 +213,7 @@ const MaintenanceScheduleDetails = ({ scheduleDetails, onClose }) => {
                     status: "In Repair",
                 };
 
-                await updateAsset(updatedAsset, profile?.id);
+                await updateUnit(updatedAsset, profile?.id);
             }
 
             setSelectedSchedule(prev => ({ ...prev, status: "Ongoing" }));
@@ -245,7 +245,7 @@ const MaintenanceScheduleDetails = ({ scheduleDetails, onClose }) => {
                 : [selectedSchedule.assets];
 
             for (const assetId of assetIds) {
-                const assetData = await fetchAssetById(assetId);
+                const assetData = await fetchUnitById(assetId);
                 if (!assetData) {
                     throw new Error(`Asset not found: ${assetId}`);
                 }
@@ -255,7 +255,7 @@ const MaintenanceScheduleDetails = ({ scheduleDetails, onClose }) => {
                     status: "Under Investigation",
                 };
 
-                await updateAsset(updatedAsset, profile?.id);
+                await updateUnit(updatedAsset, profile?.id);
             }
 
             setMessage("Completion requested successfully!");
@@ -291,7 +291,7 @@ const MaintenanceScheduleDetails = ({ scheduleDetails, onClose }) => {
                 : [selectedSchedule.assets];
 
             for (const assetId of assetIds) {
-                const assetData = await fetchAssetById(assetId);
+                const assetData = await fetchUnitById(assetId);
                 if (!assetData) {
                     throw new Error(`Asset not found: ${assetId}`);
                 }
@@ -301,7 +301,7 @@ const MaintenanceScheduleDetails = ({ scheduleDetails, onClose }) => {
                     status: "Active",
                 };
 
-                await updateAsset(updatedAsset, profile?.id);
+                await updateUnit(updatedAsset, profile?.id);
             }
 
             setSelectedSchedule(prev => ({ ...prev, status: "Completed" }));

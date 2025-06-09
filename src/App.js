@@ -5,7 +5,7 @@ import Main from "./pages/Main/MainPage";
 import Dashboard from "./pages/Main/DashboardPage/Dashboard";
 import UserManagement from "./pages/Main/UserManagement/UserManagement";
 import Requests from "./pages/Main/Requests/Requests";
-import ManageAssets from "./pages/Main/ManageAsset/ManageAsset";
+import ManageAssets from "./pages/Main/ManageAsset/ManageAssets";
 import MaintenanceScheduling from "./pages/Main/MaintenanceScheduling/MaintenanceScheduling";
 import LocationManagement from "./pages/Main/Records/LocationManagement/LocationManagement";
 import VendorContact from "./pages/Main/Records/VendorContact/VendorContact";

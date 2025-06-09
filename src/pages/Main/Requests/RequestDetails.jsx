@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { updateRequest } from "../../../firebase/requestservices";
 import { addSchedule } from "../../../firebase/maintenancescheduleservices";
 import { fetchUsers } from "../../../firebase/userservices";
-import { updateAsset, fetchAssetById } from "../../../firebase/assetservices";
+import { updateUnit, fetchUnitById } from "../../../firebase/assetunitservices";
 import { useAuth } from "../../../context/AuthContext";
 import { FiArrowLeft, FiCheck, FiDelete, FiX } from "react-icons/fi";
 import MessageModal from "../../../components/Modal/MessageModal";
@@ -66,7 +66,7 @@ const RequestDetails = ({ requestDetails, onClose }) => {
 
             const fetchAssetData = async () => {
                 try {
-                    const asset = await fetchAssetById(requestDetails.reportedAsset);
+                    const asset = await fetchUnitById(requestDetails.reportedAsset);
                     setReportedAsset(asset);
                     setAssetName(asset.name);
                 } catch (error) {
@@ -104,7 +104,7 @@ const RequestDetails = ({ requestDetails, onClose }) => {
                     requestId: selectedRequest.id,
                 }, profile?.id);
 
-                const assetData = await fetchAssetById(selectedRequest.reportedAsset);
+                const assetData = await fetchUnitById(selectedRequest.reportedAsset);
                 if (!assetData) {
                     throw new Error("Asset not found");
                 }
@@ -114,10 +114,10 @@ const RequestDetails = ({ requestDetails, onClose }) => {
                     status: selectedRequest.assetStatus,
                 };
 
-                await updateAsset(updatedAsset, profile?.id);
+                await updateUnit(updatedAsset, profile?.id);
                 setMessage("Request successfully approved. Maintenance schedule was created.");
             } else {
-                const assetData = await fetchAssetById(selectedRequest.reportedAsset);
+                const assetData = await fetchUnitById(selectedRequest.reportedAsset);
                 if (!assetData) {
                     throw new Error("Asset not found");
                 }
@@ -127,7 +127,7 @@ const RequestDetails = ({ requestDetails, onClose }) => {
                     status: selectedRequest.assetStatus,
                 };
 
-                await updateAsset(updatedAsset, profile?.id);
+                await updateUnit(updatedAsset, profile?.id);
                 setMessage("Request successfully approved. Asset status was updated.");
             }
             updateRequest(selectedRequest, "Approved", profile?.id);

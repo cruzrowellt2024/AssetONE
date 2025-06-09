@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { addRequest } from "../../../firebase/requestservices";
 import { useAuth } from "../../../context/AuthContext";
-import { updateAsset, fetchAssetById } from "../../../firebase/assetservices";
+import { updateUnit, fetchUnitById } from "../../../firebase/assetunitservices";
 import { fetchPositionById } from "../../../firebase/usertitleservices";
 import { FiArrowLeft } from "react-icons/fi";
 import MessageModal from "../../../components/Modal/MessageModal";
@@ -22,7 +22,7 @@ const AddRequest = ({ assetId, onClose }) => {
   useEffect(() => {
     const loadAsset = async () => {
       try {
-        const asset = await fetchAssetById(assetId);
+        const asset = await fetchUnitById(assetId);
         setReportedAsset(asset);
       } catch (error) {
         console.error(error);
@@ -98,7 +98,7 @@ const AddRequest = ({ assetId, onClose }) => {
         status: "Under Investigation",
       };
 
-      await updateAsset(updatedAsset);
+      await updateUnit(updatedAsset);
 
       alert("Request was added successfully!");
 

@@ -359,7 +359,7 @@ const UserManagement = () => {
         )}
       </div>
 
-      {selectedUser && <UserDetails user={selectedUser} titles={titles} />}
+      {selectedUser && <UserDetails userDetails={selectedUser} onClose={() => setSelectedUser(null)} />}
 
       {isAddingUser && <AddUser onClose={() => setIsAddingUser(false)} />}
 
