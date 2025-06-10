@@ -192,15 +192,15 @@ const MaintenanceScheduling = () => {
     <div className="flex flex-col m-4 w-[calc(100%-2rem)] h-[calc(100%-2rem)] max-h-[calc(100%-6rem)] rounded-lg shadow-2xl">
       <div className="sticky top-0 flex-shrink-0 min-h-[5rem] rounded-lg bg-gray-600 text-white px-4 pt-8 pb-2">
         <div className="flex flex-wrap items-center gap-2 mb-2 px-2">
-          <h1 className="flex-1 text-xl font-semibold order-1 mr-auto min-w-0">
-            Maintenance Schedule List
+          <h1 className="flex-1 text-xl font-semibold order-1 mr-auto min-w-[120px]">
+            Schedule List
             <span className="ml-4 text-gray-300">
               {filteredSchedules.length}
             </span>
           </h1>
           <input
             type="text"
-            className="order-2 min-w-[120px] max-w-[200px] flex-grow rounded-md border-none px-2 py-1 text-black"
+            className="order-2 min-w-[100px] max-w-[300px] flex-grow rounded-md border-none px-2 py-1 text-black"
             placeholder="Search by asset, title, or type..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -258,10 +258,10 @@ const MaintenanceScheduling = () => {
           <thead>
             <tr>
               <th className="w-[20%] text-start">Schedule Title</th>
-              <th className="w-[20%] text-start">Maintenance Type</th>
+              <th className="hidden sm:table-cell w-[20%] text-start">Maintenance Type</th>
               <th className="w-[20%] text-start">Status</th>
-              <th className="w-[20%] text-start">Priority Level</th>
-              <th className="w-[20%] text-start">Scheduled Date</th>
+              <th className="hidden sm:table-cell w-[20%] text-start">Priority Level</th>
+              <th className="hidden sm:table-cell w-[20%] text-start">Scheduled Date</th>
             </tr>
           </thead>
         </table>
@@ -283,7 +283,7 @@ const MaintenanceScheduling = () => {
                     {schedule.title}
                   </td>
                   <td
-                    className={`w-[20%] border-b border-gray-300 py-2 truncate`}
+                    className={`hidden sm:table-cell w-[20%] border-b border-gray-300 py-2 truncate`}
                   >
                     {schedule.maintenanceType}
                   </td>
@@ -299,7 +299,7 @@ const MaintenanceScheduling = () => {
                     {schedule.status}
                   </td>
                   <td
-                    className={`w-[20%] border-b border-gray-300 py-2 truncate`}
+                    className={`hidden sm:table-cell w-[20%] border-b border-gray-300 py-2 truncate`}
                   >
                     <span
                       className={`status-indicator priority-${
@@ -311,7 +311,7 @@ const MaintenanceScheduling = () => {
                     {getPriorityLabel(schedule.priorityScore)}
                   </td>
                   <td
-                    className={`w-[20%] border-b border-gray-300 py-2 truncate`}
+                    className={`hidden sm:table-cell w-[20%] border-b border-gray-300 py-2 truncate`}
                   >
                     {schedule.scheduledDate?.toDate().toLocaleString()}
                   </td>

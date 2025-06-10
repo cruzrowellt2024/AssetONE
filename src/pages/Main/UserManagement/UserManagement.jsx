@@ -187,14 +187,14 @@ const UserManagement = () => {
     <div className="flex flex-col m-4 w-[calc(100%-2rem)] h-[calc(100%-2rem)] max-h-[calc(100%-6rem)] rounded-lg shadow-2xl">
       <div className="sticky top-0 flex-shrink-0 min-h-[5rem] rounded-lg bg-gray-600 text-white px-4 pt-8 pb-2">
         <div className="flex flex-wrap items-center gap-2 mb-2 px-2">
-          <h1 className="flex-1 text-xl font-semibold order-1 mr-auto min-w-0">
+          <h1 className="flex-1 text-xl font-semibold order-1 mr-auto min-w-[120px]">
             User List
             <span className="ml-4 text-gray-300">{filteredUsers.length}</span>
           </h1>
 
           <input
             type="text"
-            className="order-2 min-w-[120px] max-w-[200px] flex-grow rounded-md border-none px-2 py-1 text-black"
+            className="order-2 min-w-[100px] max-w-[300px] flex-grow rounded-md border-none px-2 py-1 text-black"
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -247,9 +247,9 @@ const UserManagement = () => {
           <thead>
             <tr>
               <th className="w-[25%] text-start">Name</th>
-              <th className="w-[20%] text-start">Position</th>
+              <th className="hidden sm:table-cell w-[20%] text-start">Position</th>
               <th className="w-[20%] text-start">Role</th>
-              <th className="w-[17.5%] text-start">Updated</th>
+              <th className="hidden sm:table-cell w-[17.5%] text-start">Updated</th>
               <th className="hidden sm:table-cell w-[17.5%] text-start">
                 Created
               </th>
@@ -274,7 +274,7 @@ const UserManagement = () => {
                     {user.firstName} {user.lastName}
                   </td>
                   <td
-                    className={`w-[20%] border-b border-gray-300 py-2 truncate`}
+                    className={`hidden sm:table-cell w-[20%] border-b border-gray-300 py-2 truncate`}
                   >
                     {titles[user.title] || user.title}
                   </td>
@@ -284,7 +284,7 @@ const UserManagement = () => {
                     {ROLE_LABELS[user.role] || user.role}
                   </td>
                   <td
-                    className={`w-[17.5%] border-b border-gray-300 py-2 truncate`}
+                    className={`hidden sm:table-cell w-[17.5%] border-b border-gray-300 py-2 truncate`}
                   >
                     {user.dateUpdated
                       ? timeAgo(user.dateUpdated.toDate())

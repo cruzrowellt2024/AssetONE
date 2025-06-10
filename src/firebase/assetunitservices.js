@@ -48,6 +48,25 @@ const generateUnitID = async () => {
   }
 };
 
+const generateUnitRequestID = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, "unit_requests"));
+    const unitIds = querySnapshot.docs.map((doc) => doc.id);
+
+    if (unitIds.length > 0) {
+      const highestID = Math.max(
+        ...unitIds.map((id) => parseInt(id.replace("UR-", "")))
+      );
+      return `UR-${(highestID + 1).toString().padStart(5, "0")}`;
+    } else {
+      return "UR-00001";
+    }
+  } catch (error) {
+    console.error("Error generating unit ID:", error);
+    return "UR-00001";
+  }
+};
+
 const getNextUnitNumber = async (asset) => {
   try {
     const q = query(
@@ -80,6 +99,7 @@ const addUnit = async (unit, logby) => {
       location,
       vendor,
       specs,
+      isLegacy
     } = unit;
 
     const unitID = await generateUnitID();
@@ -96,6 +116,8 @@ const addUnit = async (unit, logby) => {
       location,
       vendor,
       addedBy: logby,
+      isLegacy,
+      requestedBy: isLegacy ? "" : logby,
       lastUpdatedBy: logby,
       dateCreated: serverTimestamp(),
       dateUpdated: serverTimestamp(),
@@ -107,6 +129,44 @@ const addUnit = async (unit, logby) => {
     }
 
     await addActivityLog(logby, "Add Unit", `Unit ID: ${unitID}`);
+  } catch (error) {
+    console.error("Error adding unit:", error);
+    throw error;
+  }
+};
+
+const addRequestUnit = async (request, logby) => {
+  try {
+    const {
+      asset,
+      quantity,
+      estimatedCostPerUnit,
+      totalCost,
+      reason,
+      specs,
+    } = request;
+
+    const unitRequestID = await generateUnitRequestID();
+
+    await setDoc(doc(db, "unit_requests", unitRequestID), {
+      asset,
+      quantity,
+      estimatedCostPerUnit,
+      totalCost,
+      reason,
+      status: "Pending",
+      requestedBy: logby,
+      lastUpdatedBy: logby,
+      dateCreated: serverTimestamp(),
+      dateUpdated: serverTimestamp(),
+    });
+
+    const specsRef = collection(db, "unit_requests", unitRequestID, "specifications");
+    for (const spec of specs) {
+      await addDoc(specsRef, spec);
+    }
+
+    await addActivityLog(logby, "Request Unit", `Unit Request ID: ${unitRequestID}`);
   } catch (error) {
     console.error("Error adding unit:", error);
     throw error;
@@ -129,6 +189,7 @@ const updateUnit = async (selectedUnit, logby) => {
         location: selectedUnit.location ?? "",
         vendor: selectedUnit.vendor ?? "",
         addedBy: selectedUnit.addedBy ?? "",
+        requestedBy: selectedUnit.requestedBy ?? "",
         lastUpdatedBy: logby,
         dateUpdated: serverTimestamp(),
       },
@@ -181,6 +242,23 @@ const fetchSpecs = async (unitID) => {
   try {
     const querySnapshot = await getDocs(
       collection(db, "units", unitID, "specifications")
+    );
+    const specs = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    specs.sort((a, b) => a.index - b.index);
+    return specs;
+  } catch (error) {
+    console.error("Error fetching specifications:", error);
+  }
+};
+
+const fetchRequestSpecs = async (unitID) => {
+  try {
+    const querySnapshot = await getDocs(
+      collection(db, "unit_requests", unitID, "specifications")
     );
     const specs = querySnapshot.docs.map((doc) => ({
       id: doc.id,
@@ -263,7 +341,9 @@ const fetchUnitDataById = async (unitId) => {
 export {
   fetchUnits,
   fetchSpecs,
+  fetchRequestSpecs,
   addUnit,
+  addRequestUnit,
   updateUnit,
   deleteUnit,
   getUnitNameById,

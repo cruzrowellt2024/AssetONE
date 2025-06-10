@@ -140,11 +140,12 @@ const Dashboard = () => {
     const assetMonthlyData = getMonthlyAssetCounts();
 
     return (
-        <div className="dashboard-container">
-            <div className="dashboard-content">
-                <div className="panel total-assets">
-                    <h2>Total Asset Units</h2>
-                    <div style={{ width: '100%', height: 300 }}>
+        <div className="dashboard-container bg-gray-100 min-h-screen py-8 px-2 md:px-8">
+            <div className="dashboard-content grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Total Asset Units */}
+                <div className="panel total-assets bg-white rounded-lg shadow p-6 flex flex-col items-center">
+                    <h2 className="text-xl font-semibold mb-4 text-gray-700">Total Asset Units</h2>
+                    <div className="w-full h-72">
                         <ResponsiveContainer>
                             <PieChart>
                                 <Pie
@@ -167,37 +168,40 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                <div className="panel maintenance-today">
-                    <div className="panel-header">
-                        <h2>Maintenance Today</h2>
+                {/* Maintenance Today */}
+                <div className="panel maintenance-today bg-white rounded-lg shadow p-6 flex flex-col">
+                    <div className="panel-header flex justify-between items-center mb-2">
+                        <h2 className="text-xl font-semibold text-gray-700">Maintenance Today</h2>
                         {schedules.length > 3 && (
-                            <button className="view-more-button" onClick={() => setShowModal(true)}>View All</button>
+                            <button className="view-more-button text-blue-600 hover:underline text-sm" onClick={() => setShowModal(true)}>View All</button>
                         )}
                     </div>
-                    <table className="table">
-                        <colgroup>
-                            <col style={{ width: "50%" }} />
-                            <col style={{ width: "50%" }} />
-                        </colgroup>
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Time</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {schedules.length > 0 ? (
-                                schedules.slice(0, 5).map((schedule, index) => (
-                                    <tr key={index} onClick={() => setSelectedSchedule(schedule)}>
-                                        <td>{schedule.title || "Maintenance Task"}</td>
-                                        <td>{schedule.scheduledDate.toDate().toLocaleTimeString()}</td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr><td colSpan="3">No schedule today.</td></tr>
-                            )}
-                        </tbody>
-                    </table>
+                    <div className="overflow-x-auto">
+                        <table className="table w-full text-sm text-left">
+                            <colgroup>
+                                <col style={{ width: "50%" }} />
+                                <col style={{ width: "50%" }} />
+                            </colgroup>
+                            <thead>
+                                <tr className="bg-gray-100">
+                                    <th className="py-2 px-2">Title</th>
+                                    <th className="py-2 px-2">Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {schedules.length > 0 ? (
+                                    schedules.slice(0, 5).map((schedule, index) => (
+                                        <tr key={index} className="hover:bg-blue-50 cursor-pointer" onClick={() => setSelectedSchedule(schedule)}>
+                                            <td className="py-2 px-2">{schedule.title || "Maintenance Task"}</td>
+                                            <td className="py-2 px-2">{schedule.scheduledDate.toDate().toLocaleTimeString()}</td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr><td colSpan="2" className="py-2 px-2 text-center text-gray-500">No schedule today.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 {showModal && (
@@ -206,29 +210,34 @@ const Dashboard = () => {
 
                 {selectedSchedule && <MaintenanceScheduleDetails scheduleDetails={selectedSchedule} onClose={() => setSelectedSchedule(null)} />}
 
-                <div className="panel total-spent">
-                    <h2>Total Spent</h2>
-                    <div className="total-cost">
-                        <p>Total: Php{totalAssetCost.toLocaleString()}</p>
+                {/* Total Spent */}
+                <div className="panel total-spent bg-white rounded-lg shadow p-6 flex flex-col">
+                    <h2 className="text-xl font-semibold mb-4 text-gray-700">Total Spent</h2>
+                    <div className="total-cost mb-2">
+                        <p className="text-lg font-bold text-green-700">Total: <span className="font-mono">Php{totalAssetCost.toLocaleString()}</span></p>
                     </div>
-                    <div className="cost-indicators">
-                        <p>Asset Cost: Php{totalAssetCost.toLocaleString()}</p>
-                        <p>Repair Cost: Php{totalRepairCost.toLocaleString()}</p>
+                    <div className="cost-indicators space-y-1">
+                        <p className="text-gray-600">Asset Cost: <span className="font-mono">Php{totalAssetCost.toLocaleString()}</span></p>
+                        <p className="text-gray-600">Repair Cost: <span className="font-mono">Php{totalRepairCost.toLocaleString()}</span></p>
                     </div>
                 </div>
 
-                <div className="panel quick-actions">
-                    <h2>Quick Actions</h2>
-                    <button className="quick-action-btn" onClick={() => setIsAddingAsset(true)}>Add Asset</button>
-                    <button className="quick-action-btn" onClick={() => setIsAddingSchedule(true)}>Create Schedule</button>
-                    <button className="quick-action-btn" onClick={() => setIsAddingLocation(true)}>New Location</button>
+                {/* Quick Actions */}
+                <div className="panel quick-actions bg-white rounded-lg shadow p-6 flex flex-col">
+                    <h2 className="text-xl font-semibold mb-4 text-gray-700">Quick Actions</h2>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                        <button className="quick-action-btn bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition" onClick={() => setIsAddingAsset(true)}>Add Asset</button>
+                        <button className="quick-action-btn bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition" onClick={() => setIsAddingSchedule(true)}>Create Schedule</button>
+                        <button className="quick-action-btn bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 transition" onClick={() => setIsAddingLocation(true)}>New Location</button>
+                    </div>
                     {isAddingAsset && (<AddAsset onClose={() => setIsAddingAsset(false)} />)}
                     {isAddingSchedule && (<AddSchedule onClose={() => setIsAddingSchedule(false)} />)}
                     {isAddingLocation && (<AddLocation onClose={() => setIsAddingLocation(false)} />)}
                 </div>
 
-                <div className="panel asset-added">
-                    <h2>Assets Added</h2>
+                {/* Assets Added */}
+                <div className="panel asset-added bg-white rounded-lg shadow p-6 flex flex-col">
+                    <h2 className="text-xl font-semibold mb-4 text-gray-700">Assets Added</h2>
                     <ResponsiveContainer width="100%" height={200}>
                         <BarChart data={assetMonthlyData}>
                             <CartesianGrid strokeDasharray="3 3" />
@@ -240,43 +249,46 @@ const Dashboard = () => {
                     </ResponsiveContainer>
                 </div>
 
-                <div className="panel recent-activities">
-                    <div className="panel-header">
-                        <h2>Recent Activities</h2>
+                {/* Recent Activities */}
+                <div className="panel recent-activities bg-white rounded-lg shadow p-6 flex flex-col col-span-1 md:col-span-2 lg:col-span-3">
+                    <div className="panel-header flex justify-between items-center mb-2">
+                        <h2 className="text-xl font-semibold text-gray-700">Recent Activities</h2>
                         {activities.length > 5 && (
-                            <button className="view-more-button" onClick={() => setShowActivityModal(true)}>View More</button>
+                            <button className="view-more-button text-blue-600 hover:underline text-sm" onClick={() => setShowActivityModal(true)}>View More</button>
                         )}
                     </div>
-                    <table className="table">
-                        <colgroup>
-                            <col style={{ width: "25%" }} />
-                            <col style={{ width: "25%" }} />
-                            <col style={{ width: "25%" }} />
-                            <col style={{ width: "25%" }} />
-                        </colgroup>
-                        <thead>
-                            <tr>
-                                <th>User</th>
-                                <th>Action</th>
-                                <th>Remarks</th>
-                                <th>Timestamp</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {activities.length > 0 ? (
-                                activities.slice(0, 5).map((log, index) => (
-                                    <tr key={index}>
-                                        <td>{userMap[log.user] || "Unknown"}</td>
-                                        <td>{log.action}</td>
-                                        <td>{log.remarks}</td>
-                                        <td>{new Date(log.timestamp?.toDate?.() || log.timestamp).toLocaleString()}</td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr><td colSpan="4">No recent activity</td></tr>
-                            )}
-                        </tbody>
-                    </table>
+                    <div className="overflow-x-auto">
+                        <table className="table w-full text-sm text-left">
+                            <colgroup>
+                                <col style={{ width: "25%" }} />
+                                <col style={{ width: "25%" }} />
+                                <col style={{ width: "25%" }} />
+                                <col style={{ width: "25%" }} />
+                            </colgroup>
+                            <thead>
+                                <tr className="bg-gray-100">
+                                    <th className="py-2 px-2">User</th>
+                                    <th className="py-2 px-2">Action</th>
+                                    <th className="py-2 px-2">Remarks</th>
+                                    <th className="py-2 px-2">Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {activities.length > 0 ? (
+                                    activities.slice(0, 5).map((log, index) => (
+                                        <tr key={index} className="hover:bg-blue-50">
+                                            <td className="py-2 px-2">{userMap[log.user] || "Unknown"}</td>
+                                            <td className="py-2 px-2">{log.action}</td>
+                                            <td className="py-2 px-2">{log.remarks}</td>
+                                            <td className="py-2 px-2">{new Date(log.timestamp?.toDate?.() || log.timestamp).toLocaleString()}</td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr><td colSpan="4" className="py-2 px-2 text-center text-gray-500">No recent activity</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 {showActivityModal && (
                     <RecentActivityModal

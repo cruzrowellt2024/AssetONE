@@ -35,13 +35,14 @@ const Modal = ({
   return (
     <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      onClick={onClose}
+      onClick={handleBackdropClick}
     >
       <div
-        className="bg-white rounded-lg shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+        className="modal-container bg-white rounded-lg shadow-lg w-full max-w-3xl max-h-[90vh] flex flex-col outline-none"
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-gray-800 text-white flex items-center justify-between p-4 rounded-t-lg">
+        <div className="bg-gray-800 text-white flex items-center justify-between p-4 rounded-t-lg sticky top-0 z-10">
           <div className="flex items-center gap-4">
             <FiArrowLeft
               className="cursor-pointer hover:text-gray-300 transition"
@@ -69,7 +70,7 @@ const Modal = ({
           </div>
         </div>
 
-        <div className="p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="p-6 overflow-y-auto flex-1" onClick={(e) => e.stopPropagation()}>
           {children}
         </div>
       </div>

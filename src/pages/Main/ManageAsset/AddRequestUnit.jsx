@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { addUnit } from "../../../firebase/assetunitservices";
+import { addRequestUnit, addUnit } from "../../../firebase/assetunitservices";
 import { fetchDepartments } from "../../../firebase/departmentservices";
 import { fetchLocations } from "../../../firebase/locationservices";
 import { fetchVendors } from "../../../firebase/vendorservices";
@@ -8,23 +8,16 @@ import { FiArrowLeft } from "react-icons/fi";
 import MessageModal from "../../../components/Modal/MessageModal";
 import SpinnerOverlay from "../../../components/SpinnerOverlay";
 
-const AddAssetUnit = ({ assetDetails, onClose }) => {
-  const [unit, setUnit] = useState({
+const AddRequestUnit = ({ assetDetails, onClose }) => {
+  const [requestedUnit, setRequestedUnit] = useState({
     asset: "",
-    dateAcquired: "",
-    cost: "",
-    status: "",
-    condition: "",
+    quantity: 0,
+    estimatedCostPerUnit: 0,
+    totalCost: 0,
+    reason: "",
     specs: [],
-    department: "",
-    location: "",
-    vendor: "",
-    isLegacy: true,
   });
 
-  const [departments, setDepartments] = useState([]);
-  const [locations, setLocations] = useState([]);
-  const [vendors, setVendors] = useState([]);
   const [specKey, setSpecKey] = useState("");
   const [specValue, setSpecValue] = useState("");
   const [editingIndex, setEditingIndex] = useState(null);
@@ -35,45 +28,38 @@ const AddAssetUnit = ({ assetDetails, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-  if (assetDetails) {
-    setUnit((prev) => ({
-      ...prev,
-      asset: assetDetails.id,
-      isLegacy: profile?.role === "system_administrator"
-    }));
-  }
-}, [assetDetails]);
-  
-  useEffect(() => {
-    loadDropdownData(fetchDepartments, setDepartments);
-    loadDropdownData(fetchLocations, setLocations);
-    loadDropdownData(fetchVendors, setVendors);
-  }, []);
-
-  const loadDropdownData = async (fetchFn, setFn) => {
-    try {
-      const data = await fetchFn();
-      const mappedData = data.reduce((acc, item) => {
-        acc[item.id] = item.name;
-        return acc;
-      }, {});
-      setFn(mappedData);
-    } catch (error) {
-      console.error(`Error fetching data:`, error);
-      setFn({});
+    if (assetDetails) {
+      setRequestedUnit((prev) => ({
+        ...prev,
+        asset: assetDetails.id,
+      }));
     }
+  }, [assetDetails]);
+
+  const handleChange = (key, value) => {
+    const updated = {
+      ...requestedUnit,
+      [key]: value,
+    };
+
+    const quantity = parseFloat(updated.quantity) || 0;
+    const unitCost = parseFloat(updated.estimatedCostPerUnit) || 0;
+
+    updated.totalCost = quantity * unitCost;
+
+    setRequestedUnit(updated);
   };
 
   const handleAddSpec = () => {
     if (!specKey.trim() || !specValue.trim()) return;
 
     if (editingIndex !== null) {
-      const updatedSpecs = [...unit.specs];
+      const updatedSpecs = [...requestedUnit.specs];
       updatedSpecs[editingIndex] = { key: specKey, value: specValue };
-      setUnit((prev) => ({ ...prev, specs: updatedSpecs }));
+      setRequestedUnit((prev) => ({ ...prev, specs: updatedSpecs }));
       setEditingIndex(null);
     } else {
-      setUnit((prev) => ({
+      setRequestedUnit((prev) => ({
         ...prev,
         specs: [...prev.specs, { key: specKey, value: specValue }],
       }));
@@ -84,13 +70,13 @@ const AddAssetUnit = ({ assetDetails, onClose }) => {
   };
 
   const handleEditSpec = (index) => {
-    setSpecKey(unit.specs[index].key);
-    setSpecValue(unit.specs[index].value);
+    setSpecKey(requestedUnit.specs[index].key);
+    setSpecValue(requestedUnit.specs[index].value);
     setEditingIndex(index);
   };
 
   const handleDeleteSpec = (index) => {
-    setUnit((prev) => ({
+    setRequestedUnit((prev) => ({
       ...prev,
       specs: prev.specs.filter((_, i) => i !== index),
     }));
@@ -98,19 +84,16 @@ const AddAssetUnit = ({ assetDetails, onClose }) => {
 
   const handleAddUnit = async () => {
     const hasEmptyField = [
-      unit.dateAcquired,
-      unit.cost,
-      unit.department,
-      unit.location,
-      unit.vendor,
-      unit.status,
-      unit.condition,
+      requestedUnit.quantity,
+      requestedUnit.reason,
     ].some((field) => !field.trim());
 
-    const isCostValid = unit.cost !== "" && !isNaN(Number(unit.cost));
-    const hasEmptySpecs = unit.specs.length === 0;
+    const isCostValid =
+      requestedUnit.estimatedCostPerUnit !== "" && !isNaN(Number(requestedUnit.estimatedCostPerUnit)) ||
+      requestedUnit.totalCost !== "" && !isNaN(Number(requestedUnit.totalCost));
+    const hasEmptySpecs = requestedUnit.specs.length === 0 && profile?.role !== "operational_administrator";
 
-    if (hasEmptyField || !isCostValid || hasEmptySpecs) {
+    if (hasEmptyField || !isCostValid) {
       setError(
         "All fields are required, and at least one specification must be added."
       );
@@ -120,26 +103,24 @@ const AddAssetUnit = ({ assetDetails, onClose }) => {
     setIsLoading(true);
 
     try {
-      const parsedCost = Number(unit.cost);
-      await addUnit(
+      const parsedEstimatedCostPerUnit = Number(requestedUnit.estimatedCostPerUnit);
+      const parsedTotalCost = Number(requestedUnit.totalCost);
+      await addRequestUnit(
         {
-          ...unit,
-          parsedCost,
+          ...requestedUnit,
+          parsedEstimatedCostPerUnit,
+          parsedTotalCost,
         },
         profile?.id
       );
 
       setMessage("Unit was added successfully!");
-      setUnit({
-        unit: "",
-        dateAcquired: "",
-        cost: "",
-        status: "",
-        condition: "",
+      setRequestedUnit({
+        quantity: 0,
+        estimatedCostPerUnit: 0,
+        totalCost: 0,
+        reason: "",
         specs: [],
-        department: "",
-        location: "",
-        vendor: "",
       });
       setSpecKey("");
       setSpecValue("");
@@ -173,7 +154,7 @@ const AddAssetUnit = ({ assetDetails, onClose }) => {
         <div className="bg-gray-600 text-white flex items-center justify-between p-4 rounded-t-lg">
           <div className="flex items-center gap-3">
             <FiArrowLeft className="cursor-pointer" onClick={onClose} />
-            <h3 className="text-lg font-semibold">Add Unit</h3>
+            <h3 className="text-lg font-semibold">Request Unit</h3>
           </div>
         </div>
 
@@ -183,126 +164,78 @@ const AddAssetUnit = ({ assetDetails, onClose }) => {
           message={message}
           clearMessages={clearMessages}
         />
+
         {currentStep === 1 && (
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Acquisition Date
-                </label>
-                <input
-                  type="date"
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  value={unit.dateAcquired}
-                  onChange={(e) =>
-                    setUnit({ ...unit, dateAcquired: e.target.value })
-                  }
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Cost in Peso
+                  Quantity
                 </label>
                 <input
                   type="number"
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  value={unit.cost}
-                  onChange={(e) => setUnit({ ...unit, cost: e.target.value })}
+                  value={requestedUnit.quantity}
+                  onChange={(e) => handleChange("quantity", e.target.value)}
                 />
               </div>
 
-              {[
-                {
-                  label: "Department",
-                  key: "department",
-                  options: departments,
-                },
-                { label: "Location", key: "location", options: locations },
-                { label: "Vendor", key: "vendor", options: vendors },
-              ].map(({ label, key, options }) => (
-                <div key={key}>
-                  <label className="block text-sm font-medium text-gray-700">
-                    {label}
-                  </label>
-                  <select
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    value={unit[key]}
-                    onChange={(e) =>
-                      setUnit({ ...unit, [key]: e.target.value })
-                    }
-                  >
-                    <option value="">Select {label}</option>
-                    {label !== "Vendor" && (
-                      <option value="on_stock">No {label} - On Stock</option>
-                    )}
-                    {Object.entries(options).map(([id, name]) => (
-                      <option key={id} value={id}>
-                        {name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ))}
-
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Status
+                  Estimated Cost per Unit
                 </label>
-                <select
+                <input
+                  type="number"
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  value={unit.status}
+                  value={requestedUnit.estimatedCostPerUnit}
                   onChange={(e) =>
-                    setUnit({ ...unit, status: e.target.value })
+                    handleChange("estimatedCostPerUnit", e.target.value)
                   }
-                >
-                  <option value="">Select Status</option>
-                  {[
-                    "On Stock",
-                    "In Use",
-                    "Under Investigation",
-                    "In Repair",
-                    "Borrowed",
-                    "Broken",
-                    "Disposed",
-                  ].map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Condition
+                  Total Cost
                 </label>
-                <select
+                <input
+                  type="number"
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  value={unit.condition}
-                  onChange={(e) =>
-                    setUnit({ ...unit, condition: e.target.value })
-                  }
-                >
-                  <option value="">Select Condition</option>
-                  {["Excellent", "Good", "Fair", "Poor", "Unserviceable"].map(
-                    (c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    )
-                  )}
-                </select>
+                  value={requestedUnit.totalCost}
+                  readOnly
+                />
+              </div>
+
+              <div className="col-span-1 md:col-span-3">
+                <label className="block text-sm font-medium text-gray-700">
+                  Reason
+                </label>
+                <textarea
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  value={requestedUnit.reason}
+                  onChange={(e) => handleChange("reason", e.target.value)}
+                  rows={3}
+                  placeholder="Enter the reason for this request"
+                />
               </div>
             </div>
 
             <div className="mt-6 flex justify-end">
-              <button
-                onClick={nextStep}
-                className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
-              >
-                Next
-              </button>
+              {profile?.role === "operational_administrator" ? (
+                <button
+                  onClick={nextStep}
+                  className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+                >
+                  Next
+                </button>
+              ) : (
+                <button
+                  onClick={handleAddUnit}
+                  className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
+                >
+                  Submit
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -337,9 +270,9 @@ const AddAssetUnit = ({ assetDetails, onClose }) => {
                     {editingIndex !== null ? "Update Spec" : "Add Spec"}
                   </button>
                 </div>
-                {unit.specs.length > 0 && (
+                {requestedUnit.specs.length > 0 && (
                   <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
-                    {unit.specs.map((spec, index) => (
+                    {requestedUnit.specs.map((spec, index) => (
                       <li
                         key={index}
                         className="flex justify-between items-center"
@@ -387,4 +320,4 @@ const AddAssetUnit = ({ assetDetails, onClose }) => {
   );
 };
 
-export default AddAssetUnit;
+export default AddRequestUnit;

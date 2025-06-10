@@ -91,8 +91,8 @@ const AssetDetails = ({ assetDetails, onClose }) => {
   };
 
   return (
-    <div className="asset-details-container">
-      <div className="header bg-gray-600 text-white flex items-center justify-between p-4 rounded-t-lg">
+    <div className="asset-details-container flex flex-col h-full">
+      <div className="header bg-gray-600 text-white flex items-center justify-between p-4 rounded-t-lg flex-shrink-0 sticky top-0 z-10">
         <div className="flex items-center gap-3">
           <FiArrowLeft
             className="back-btn cursor-pointer"
@@ -102,22 +102,26 @@ const AssetDetails = ({ assetDetails, onClose }) => {
           <h3 className="text-lg font-semibold">Asset Details</h3>
         </div>
         <div className="actions flex items-center gap-2">
-          <button
-            className="delete-btn text-gray-200 hover:text-gray-900 px-4 py-2 rounded bg-red-600 hover:bg-red-700 transition flex items-center gap-2"
-            onClick={() => setShowDeleteModal(true)}
-            title="Delete Asset"
-          >
-            <FiTrash />
-            <span>Delete</span>
-          </button>
-          <button
-            className="save-btn bg-green-600 text-white px-5 py-2 rounded hover:bg-green-700 transition flex items-center gap-2"
-            onClick={() => setShowUpdateModal(true)}
-            title="Save Changes"
-          >
-            <FiCheckSquare />
-            <span>Save</span>
-          </button>
+          {profile?.role === "system_administrator" && (
+            <>
+              <button
+                className="delete-btn text-gray-200 hover:text-gray-900 px-4 py-2 rounded bg-red-600 hover:bg-red-700 transition flex items-center gap-2"
+                onClick={() => setShowDeleteModal(true)}
+                title="Delete Asset"
+              >
+                <FiTrash />
+                <span>Delete</span>
+              </button>
+              <button
+                className="save-btn bg-green-600 text-white px-5 py-2 rounded hover:bg-green-700 transition flex items-center gap-2"
+                onClick={() => setShowUpdateModal(true)}
+                title="Save Changes"
+              >
+                <FiCheckSquare />
+                <span>Save</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -145,7 +149,7 @@ const AssetDetails = ({ assetDetails, onClose }) => {
         clearMessages={clearMessages}
       />
 
-      <div className="record-form p-4 bg-white">
+      <div className="record-form p-4 bg-white flex-1 overflow-y-auto">
         <div className="record-form-group grid grid-cols-2 gap-x-5">
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -198,7 +202,7 @@ const AssetDetails = ({ assetDetails, onClose }) => {
             </select>
           </div>
         </div>
-        <UnitList assetDetails={selectedAsset}/>
+        <UnitList assetDetails={selectedAsset} />
       </div>
     </div>
   );

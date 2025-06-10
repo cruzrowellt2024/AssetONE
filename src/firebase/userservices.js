@@ -62,7 +62,7 @@ const addUser = async (firstName, lastName, email, password, role, department, t
             secondaryEmail: "",
             contactNumber: "",
             department,
-            title,
+            position: title,
             dateCreated: serverTimestamp(),
             dateUpdated: serverTimestamp(),
         });
@@ -93,7 +93,8 @@ const updateUser = async (selectedUser, logby) => {
             secondaryEmail: selectedUser.secondaryEmail,
             department: selectedUser.department,
             status: selectedUser.status,
-            title: selectedUser.title,
+            position: selectedUser.position || "None",
+            role: selectedUser.role,
             dateUpdated: serverTimestamp(),
         }, { merge: true });
 
