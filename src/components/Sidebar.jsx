@@ -244,7 +244,7 @@ const Sidebar = ({
               >
                 <FiDatabase className="text-lg ml-3" />
                 {(!isCollapsed || (isMobile && mobileOpen)) && (
-                  <span className="ml-3">Asset Inventory</span>
+                  <span className="ml-3">{profile.role === "finance" ? "Asset Requests" : "Asset Inventory"}</span>
                 )}
               </Link>
             </li>

@@ -1,4 +1,4 @@
-import { getDocs, collection, setDoc, doc, deleteDoc, serverTimestamp } from "firebase/firestore";
+import { getDocs, collection, setDoc, doc, deleteDoc, serverTimestamp, getDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import { addActivityLog } from './activtylogservices';
 
@@ -10,6 +10,17 @@ const fetchAssets = async () => {
     } catch (error) {
         console.error("Error fetching assets:", error);
     }
+};
+
+const fetchAssetById = async (assetId) => {
+  const docRef = doc(db, "assets", assetId);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    return { id: docSnap.id, ...docSnap.data() };
+  } else {
+    throw new Error("Asset not found in Firestore");
+  }
 };
 
 const generateAssetID = async () => {
@@ -81,4 +92,4 @@ const deleteAsset = async (assetId, logby) => {
     }
 };
 
-export { fetchAssets, addAsset, updateAsset, deleteAsset };
+export { fetchAssets, fetchAssetById, addAsset, updateAsset, deleteAsset };

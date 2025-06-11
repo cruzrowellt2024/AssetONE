@@ -10,6 +10,7 @@ import { fetchActivityLogs } from "../../../firebase/activtylogservices";
 import RecentActivityModal from "./RecentActivityModal";
 import { fetchUsers } from "../../../firebase/userservices";
 import MaintenanceScheduleDetails from "../MaintenanceScheduling/MaintenanceScheduleDetails";
+import { fetchUnits } from "../../../firebase/assetunitservices";
 
 const Dashboard = () => {
     const [assets, setAssets] = useState([]);
@@ -36,7 +37,7 @@ const Dashboard = () => {
 
     const getAssets = async () => {
         try {
-            const assetData = await fetchAssets();
+            const assetData = await fetchUnits();
             setAssets(assetData || []);
         } catch (error) {
             console.error("Error fetching asset:", error);

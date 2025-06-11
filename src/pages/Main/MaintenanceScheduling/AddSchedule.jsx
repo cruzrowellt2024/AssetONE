@@ -8,6 +8,7 @@ import { FiArrowLeft } from "react-icons/fi";
 import { fetchDepartments } from "../../../firebase/departmentservices";
 import MessageModal from "../../../components/Modal/MessageModal";
 import SpinnerOverlay from "../../../components/SpinnerOverlay";
+import { fetchAssets } from "../../../firebase/assetservices";
 
 const AddSchedule = ({ onClose }) => {
   const [technicians, setTechnicians] = useState({});
@@ -117,12 +118,8 @@ const AddSchedule = ({ onClose }) => {
 
   const getAssets = async () => {
     try {
-      const assetData = await fetchUnits();
-      const departmentId = scheduleDepartment || profile?.department;
-      const filteredAssets = assetData.filter(
-        (asset) => asset.department === departmentId
-      );
-      setAssets(filteredAssets);
+      const assetData = await fetchAssets();
+      setAssets(assetData);
     } catch (error) {
       console.error("Error fetching assets:", error);
       setAssets([]);

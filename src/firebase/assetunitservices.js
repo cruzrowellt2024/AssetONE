@@ -116,7 +116,7 @@ const addUnit = async (unit, logby) => {
       location,
       vendor,
       addedBy: logby,
-      isLegacy,
+      isLegacy: isLegacy,
       requestedBy: isLegacy ? "" : logby,
       lastUpdatedBy: logby,
       dateCreated: serverTimestamp(),
@@ -190,7 +190,7 @@ const updateUnit = async (selectedUnit, logby) => {
         vendor: selectedUnit.vendor ?? "",
         addedBy: selectedUnit.addedBy ?? "",
         requestedBy: selectedUnit.requestedBy ?? "",
-        lastUpdatedBy: logby,
+        lastUpdatedBy: logby ?? "",
         dateUpdated: serverTimestamp(),
       },
       { merge: true }
@@ -199,6 +199,32 @@ const updateUnit = async (selectedUnit, logby) => {
     await addActivityLog(logby, "Update Unit", `Unit ID: ${selectedUnit.id}`);
   } catch (error) {
     console.error("Error updating unit:", error);
+    throw error;
+  }
+};
+
+const updateRequestUnit = async (selectedRequest, remarks, status, logby) => {
+  if (!selectedRequest) return;
+  try {
+    await setDoc(
+      doc(db, "unit_requests", selectedRequest.id),
+      {
+        asset: selectedRequest.asset ?? "",
+        quantity: selectedRequest.quantity ?? 0,
+        estimatedCostPerUnit: selectedRequest.estimatedCostPerUnit ?? 0,
+        totalCost: selectedRequest.totalCost ?? 0,
+        reason: selectedRequest.reason ?? "",
+        status: status ?? "Pending",
+        remarks: remarks ?? "",
+        requestedBy: selectedRequest.requestedBy ?? "",
+        lastUpdatedBy: logby ?? "",
+        dateUpdated: serverTimestamp(),
+      },
+      { merge: true }
+    );
+    await addActivityLog(logby, "Update Unit Request", `Unit Request ID: ${selectedRequest.id}`);
+  } catch (error) {
+    console.error("Error updating unit request:", error);
     throw error;
   }
 };
@@ -345,6 +371,7 @@ export {
   addUnit,
   addRequestUnit,
   updateUnit,
+  updateRequestUnit,
   deleteUnit,
   getUnitNameById,
   fetchUnitById,

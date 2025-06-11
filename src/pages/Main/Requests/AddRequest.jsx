@@ -5,11 +5,13 @@ import { updateUnit, fetchUnitById } from "../../../firebase/assetunitservices";
 import { fetchPositionById } from "../../../firebase/usertitleservices";
 import { FiArrowLeft } from "react-icons/fi";
 import MessageModal from "../../../components/Modal/MessageModal";
+import { fetchAssets } from "../../../firebase/assetservices";
 
 const AddRequest = ({ assetId, onClose }) => {
   const [requestType, setRequestType] = useState("");
   const [description, setDescription] = useState("");
-  const [reportedAsset, setReportedAsset] = useState({});
+  const [reportedUnit, setReportedUnit] = useState({});
+  const [assetName, setAssetName] = useState("");
   const [urgency, setUrgency] = useState(0);
   const [impact, setImpact] = useState(0);
   const [status, setStatus] = useState("");
@@ -23,7 +25,7 @@ const AddRequest = ({ assetId, onClose }) => {
     const loadAsset = async () => {
       try {
         const asset = await fetchUnitById(assetId);
-        setReportedAsset(asset);
+        setReportedUnit(asset);
       } catch (error) {
         console.error(error);
       } finally {
@@ -54,8 +56,27 @@ const AddRequest = ({ assetId, onClose }) => {
     if (profile) loadUserProfile();
   }, [profile]);
 
+  useEffect(() => {
+    const fetchAssetName = async () => {
+      if (reportedUnit.asset) {
+        try {
+          // Import fetchAssets at the top if not yet imported
+          // import { fetchAssets } from "../../../firebase/assetunitservices";
+          const assets = await fetchAssets();
+          const found = assets.find((a) => a.id === reportedUnit.asset);
+          setAssetName(found ? found.name : reportedUnit.asset);
+        } catch (err) {
+          setAssetName(reportedUnit.asset);
+        }
+      } else {
+        setAssetName("");
+      }
+    };
+    fetchAssetName();
+  }, [reportedUnit.asset]);
+
   const handleAddRequest = async () => {
-    if (!requestType || !description.trim() || !reportedAsset) {
+    if (!requestType || !description.trim() || !reportedUnit) {
       alert("All fields are required!");
       return;
     }
@@ -82,11 +103,11 @@ const AddRequest = ({ assetId, onClose }) => {
       let assetStatus = status;
       if (requestType === "Maintenance Request") assetStatus = "In Repair";
 
-      const assetData = reportedAsset;
+      const assetData = reportedUnit;
 
       await addRequest(
         requestType,
-        reportedAsset.id,
+        reportedUnit.id,
         description,
         priorityScore,
         reportedBy,
@@ -98,7 +119,7 @@ const AddRequest = ({ assetId, onClose }) => {
         status: "Under Investigation",
       };
 
-      await updateUnit(updatedAsset);
+      await updateUnit(updatedAsset, profile.id);
 
       alert("Request was added successfully!");
 
@@ -129,16 +150,18 @@ const AddRequest = ({ assetId, onClose }) => {
   }
 
   useEffect(() => {
-    const status = reportedAsset.status?.toLowerCase();
+    const status = reportedUnit.status?.toLowerCase();
     if (
-      ["under investigation", "in repair", "broken", "disposed"].includes(status)
+      ["under investigation", "in repair", "broken", "disposed"].includes(
+        status
+      )
     ) {
       setRequestType("Asset Update Request");
       setMessage(`Asset is already reported and ${status}.`);
     } else {
       setRequestType("Maintenance Request");
     }
-  }, [reportedAsset]);
+  }, [reportedUnit]);
 
   const clearMessages = () => {
     setError("");
@@ -157,9 +180,13 @@ const AddRequest = ({ assetId, onClose }) => {
   return (
     <>
       {["Under Investigation", "In Repair", "Broken", "Disposed"].includes(
-        reportedAsset.status
-      ) && profile.role === "Reporter" ? (
-        <MessageModal error={error} message={message} clearMessages={clearMessages} />
+        reportedUnit.status
+      ) && profile.role === "reporter" ? (
+        <MessageModal
+          error={error}
+          message={message}
+          clearMessages={clearMessages}
+        />
       ) : (
         <div
           className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
@@ -184,18 +211,28 @@ const AddRequest = ({ assetId, onClose }) => {
 
             <div className="space-y-5">
               <div className="flex flex-col">
-                <label className="mb-1 font-medium text-gray-700">Reported Asset</label>
+                <label className="mb-1 font-medium text-gray-700">
+                  Reported Asset
+                </label>
                 <input
                   type="text"
                   placeholder="Scan QR Code"
-                  value={reportedAsset.name || ""}
+                  value={
+                    assetName || reportedUnit.unitNumber
+                      ? `${assetName || ""} - Unit #${
+                          reportedUnit.unitNumber || ""
+                        }`
+                      : ""
+                  }
                   readOnly
                   className="border border-gray-300 rounded px-3 py-2 text-gray-700 bg-gray-100 cursor-not-allowed"
                 />
               </div>
 
               <div className="flex flex-col">
-                <label className="mb-1 font-medium text-gray-700">Description</label>
+                <label className="mb-1 font-medium text-gray-700">
+                  Description
+                </label>
                 <input
                   type="text"
                   placeholder="Description"
@@ -221,12 +258,16 @@ const AddRequest = ({ assetId, onClose }) => {
                       <option value="24">Minor – Doesn't affect usage</option>
                       <option value="49">Moderate – Affects performance</option>
                       <option value="74">Major – Prevents normal use</option>
-                      <option value="100">Urgent – Needs immediate attention</option>
+                      <option value="100">
+                        Urgent – Needs immediate attention
+                      </option>
                     </select>
                   </div>
 
                   <div className="flex flex-col">
-                    <label className="mb-1 font-medium text-gray-700">Who is affected?</label>
+                    <label className="mb-1 font-medium text-gray-700">
+                      Who is affected?
+                    </label>
                     <select
                       value={impact}
                       onChange={(e) => setImpact(parseInt(e.target.value))}
@@ -245,7 +286,9 @@ const AddRequest = ({ assetId, onClose }) => {
 
               {requestType === "Asset Update Request" && (
                 <div className="flex flex-col">
-                  <label className="mb-1 font-medium text-gray-700">Status</label>
+                  <label className="mb-1 font-medium text-gray-700">
+                    Status
+                  </label>
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
@@ -255,7 +298,9 @@ const AddRequest = ({ assetId, onClose }) => {
                     <option value="">Select Status</option>
                     <option value="Active">Active</option>
                     <option value="In Use">In Use</option>
-                    <option value="Under Investigation">Under Investigation</option>
+                    <option value="Under Investigation">
+                      Under Investigation
+                    </option>
                     <option value="In Repair">In Repair</option>
                     <option value="Borrowed">Borrowed</option>
                     <option value="Broken">Broken</option>

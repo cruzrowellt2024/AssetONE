@@ -83,15 +83,15 @@ const AddRequestUnit = ({ assetDetails, onClose }) => {
   };
 
   const handleAddUnit = async () => {
-    const hasEmptyField = [
-      requestedUnit.quantity,
-      requestedUnit.reason,
-    ].some((field) => !field.trim());
+    const hasEmptyField = [requestedUnit.quantity, requestedUnit.reason].some(
+      (field) => !field.trim()
+    );
 
     const isCostValid =
-      requestedUnit.estimatedCostPerUnit !== "" && !isNaN(Number(requestedUnit.estimatedCostPerUnit)) ||
-      requestedUnit.totalCost !== "" && !isNaN(Number(requestedUnit.totalCost));
-    const hasEmptySpecs = requestedUnit.specs.length === 0 && profile?.role !== "operational_administrator";
+      (requestedUnit.estimatedCostPerUnit !== "" &&
+        !isNaN(Number(requestedUnit.estimatedCostPerUnit))) ||
+      (requestedUnit.totalCost !== "" &&
+        !isNaN(Number(requestedUnit.totalCost)));
 
     if (hasEmptyField || !isCostValid) {
       setError(
@@ -103,7 +103,9 @@ const AddRequestUnit = ({ assetDetails, onClose }) => {
     setIsLoading(true);
 
     try {
-      const parsedEstimatedCostPerUnit = Number(requestedUnit.estimatedCostPerUnit);
+      const parsedEstimatedCostPerUnit = Number(
+        requestedUnit.estimatedCostPerUnit
+      );
       const parsedTotalCost = Number(requestedUnit.totalCost);
       await addRequestUnit(
         {
@@ -168,7 +170,7 @@ const AddRequestUnit = ({ assetDetails, onClose }) => {
         {currentStep === 1 && (
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
+              <div className={`${["system_administrator", "operational_administrator"].includes(profile.role) ? "col-span-3" : "col-span-1"} md:col-span-3`}>
                 <label className="block text-sm font-medium text-gray-700">
                   Quantity
                 </label>
@@ -180,31 +182,37 @@ const AddRequestUnit = ({ assetDetails, onClose }) => {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Estimated Cost per Unit
-                </label>
-                <input
-                  type="number"
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  value={requestedUnit.estimatedCostPerUnit}
-                  onChange={(e) =>
-                    handleChange("estimatedCostPerUnit", e.target.value)
-                  }
-                />
-              </div>
+              {["system_administrator", "operational_administrator"].includes(
+                profile.role
+              ) && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Estimated Cost per Unit
+                    </label>
+                    <input
+                      type="number"
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      value={requestedUnit.estimatedCostPerUnit}
+                      onChange={(e) =>
+                        handleChange("estimatedCostPerUnit", e.target.value)
+                      }
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Total Cost
-                </label>
-                <input
-                  type="number"
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  value={requestedUnit.totalCost}
-                  readOnly
-                />
-              </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Total Cost
+                    </label>
+                    <input
+                      type="number"
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      value={requestedUnit.totalCost}
+                      readOnly
+                    />
+                  </div>
+                </>
+              )}
 
               <div className="col-span-1 md:col-span-3">
                 <label className="block text-sm font-medium text-gray-700">

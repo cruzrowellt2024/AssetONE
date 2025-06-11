@@ -6,7 +6,7 @@ const PrivateRoute = () => {
   const { user, profile, loading, profileLoading } = useAuth();
   const location = useLocation();
 
-  if (loading || profileLoading) {
+  if (profileLoading) {
     return (
       <SpinnerOverlay logo="A" />
     );
@@ -17,7 +17,7 @@ const PrivateRoute = () => {
   }
 
   if (location.pathname === "/") {
-    if (profile?.role === "Reporter") return <Navigate to="/requests" replace />;
+    if (profile?.role === "reporter") return <Navigate to="/requests" replace />;
     else return <Navigate to="/dashboard" replace />;
   }
 

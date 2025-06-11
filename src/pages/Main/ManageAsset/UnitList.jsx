@@ -13,6 +13,7 @@ const UnitList = ({ assetDetails }) => {
   const [units, setUnits] = useState([]);
   const [request, setRequest] = useState([]);
   const [departments, setDepartments] = useState({});
+  const [users, setUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -20,6 +21,7 @@ const UnitList = ({ assetDetails }) => {
   const [activeTab, setActiveTab] = useState("units");
 
   const [isAddingUnit, setIsAddingUnit] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [isRequestingUnit, setIsRequestingUnit] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -41,68 +43,82 @@ const UnitList = ({ assetDetails }) => {
   useEffect(() => {
     if (assetDetails) {
       setSelectedAsset(assetDetails);
-      console.log("Selected Asset:", assetDetails);
     }
   }, [assetDetails]);
 
   useEffect(() => {
-  // Subscribe to "units" collection
-  const unsubscribeUnits = onSnapshot(
-    collection(db, "units"),
-    (querySnapshot) => {
-      const unitList = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setUnits(unitList);
-    },
-    (error) => {
-      console.error("Error in real-time fetching units:", error);
-      setUnits([]);
-    }
-  );
-
-  // Subscribe to "unit_requests" collection
-  const unsubscribeRequests = onSnapshot(
-    collection(db, "unit_requests"),
-    (querySnapshot) => {
-      const requestList = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setRequest(requestList);
-    },
-    (error) => {
-      console.error("Error in real-time fetching unit_requests:", error);
-      setRequest([]);
-    }
-  );
-
-  // Fetch departments (only once, no need for real-time)
-  fetchDepartments()
-    .then((departmentData) => {
-      const departmentMap = departmentData.reduce((acc, department) => {
-        acc[department.id] = department.name;
-        setDepartmentFilters((prev) => ({
-          ...prev,
-          [department.id]: false,
+    // Subscribe to "units" collection
+    const unsubscribeUnits = onSnapshot(
+      collection(db, "units"),
+      (querySnapshot) => {
+        const unitList = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
         }));
-        return acc;
-      }, {});
-      setDepartments(departmentMap);
-    })
-    .catch((error) => {
-      console.error("Error fetching departments:", error);
-      setDepartments({});
-    });
+        setUnits(unitList);
+      },
+      (error) => {
+        console.error("Error in real-time fetching units:", error);
+        setUnits([]);
+      }
+    );
 
-  // Clean up both Firestore listeners
-  return () => {
-    unsubscribeUnits();
-    unsubscribeRequests();
-  };
-}, []);
+    // Subscribe to "unit_requests" collection
+    const unsubscribeRequests = onSnapshot(
+      collection(db, "unit_requests"),
+      (querySnapshot) => {
+        const requestList = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setRequest(requestList);
+      },
+      (error) => {
+        console.error("Error in real-time fetching unit_requests:", error);
+        setRequest([]);
+      }
+    );
 
+    const unsubscribeUser = onSnapshot(
+      collection(db, "users"),
+      (querySnapshot) => {
+        const userList = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setUsers(userList);
+      },
+      (error) => {
+        console.error("Error in real-time fetching unit_requests:", error);
+        setUsers([]);
+      }
+    );
+
+    // Fetch departments (only once, no need for real-time)
+    fetchDepartments()
+      .then((departmentData) => {
+        const departmentMap = departmentData.reduce((acc, department) => {
+          acc[department.id] = department.name;
+          setDepartmentFilters((prev) => ({
+            ...prev,
+            [department.id]: false,
+          }));
+          return acc;
+        }, {});
+        setDepartments(departmentMap);
+      })
+      .catch((error) => {
+        console.error("Error fetching departments:", error);
+        setDepartments({});
+      });
+
+    // Clean up both Firestore listeners
+    return () => {
+      unsubscribeUnits();
+      unsubscribeRequests();
+      unsubscribeUser();
+    };
+  }, []);
 
   const handleDepartmentFilterChange = (departmentId) => {
     setDepartmentFilters((prev) => ({
@@ -120,6 +136,11 @@ const UnitList = ({ assetDetails }) => {
 
   const applyFilters = () => {
     setShowFilterModal(false);
+  };
+
+  const getUserFullName = (userId) => {
+    const user = users.find((user) => user.id === userId);
+    return user ? `${user.firstName} ${user.lastName}` : "Unknown User";
   };
 
   const resetFilters = () => {
@@ -177,7 +198,7 @@ const UnitList = ({ assetDetails }) => {
     const isInDepartment =
       unit.department?.includes(profile?.department) ||
       profile?.role === "system_administrator" ||
-      "operational_administrator";
+      profile?.role === "operational_administrator";
 
     return (
       matchesSearch &&
@@ -214,16 +235,19 @@ const UnitList = ({ assetDetails }) => {
       (key) => statusFilters[key]
     );
     const matchesStatus =
-      selectedStatuses.length === 0 || selectedStatuses.includes(request.status);
+      selectedStatuses.length === 0 ||
+      selectedStatuses.includes(request.status);
 
     const isInDepartment =
       request.department?.includes(profile?.department) ||
       profile?.role === "system_administrator" ||
-      "operational_administrator";
+      "operational_administrator" ||
+      "finance";
 
-      
     const isReportedBy =
-      request.requestedBy?.includes(profile?.id) || profile?.role === "operational_administrator";
+      request.requestedBy?.includes(profile?.id) ||
+      profile?.role === "operational_administrator" ||
+      profile?.role === "system_administrator";
 
     return (
       matchesSearch &&
@@ -253,7 +277,10 @@ const UnitList = ({ assetDetails }) => {
 
   const getPageButtons = () => {
     const startPage = Math.max(currentPage - halfPageRange, 1);
-    const endPage = Math.min(currentPage + halfPageRange, activeTab === "units" ? totalUnitPages : totalRequestPages);
+    const endPage = Math.min(
+      currentPage + halfPageRange,
+      activeTab === "units" ? totalUnitPages : totalRequestPages
+    );
 
     const pageNumbers = [];
     for (let i = startPage; i <= endPage; i++) {
@@ -347,48 +374,107 @@ const UnitList = ({ assetDetails }) => {
             )}
           </button>
 
-          {profile?.role === "system_administrator" ? (
+          {["system_administrator", "operational_administrator"].includes(
+            profile?.role
+          ) ? (
             <>
-              <button
-                className="hidden sm:flex order-4 rounded-md bg-gray-800 px-3 py-1 text-white hover:bg-gray-900 items-center gap-1"
-                onClick={() => setIsAddingUnit(true)}
-              >
-                <FiPlus /> Add Unit
-              </button>
-
-              <button
-                onClick={() => setIsAddingUnit(true)}
-                className="fixed bottom-5 right-5 z-50 inline-flex items-center justify-center rounded-full bg-blue-600 p-4 text-white shadow-lg hover:bg-blue-700 sm:hidden"
-                aria-label="Add Unit"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
+              {/* Desktop Dropdown Button */}
+              <div className="hidden sm:flex order-4 relative">
+                <button
+                  className="rounded-md bg-gray-800 px-3 py-1 text-white hover:bg-gray-900 items-center gap-1 flex z-10"
+                  onClick={() => setShowDropdown((prev) => !prev)}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-              </button>
+                  <FiPlus /> Actions
+                </button>
+                {showDropdown && (
+                  <div className="absolute mt-2 right-0 top-6 w-40 bg-white border-none rounded shadow-2xl">
+                    {[
+                      "system_administrator",
+                      "operational_administrator",
+                    ].includes(profile?.role) && (
+                      <button
+                        onClick={() => {
+                          setIsAddingUnit(true);
+                          setShowDropdown(false);
+                        }}
+                        className="block w-full px-4 py-2 text-left bg-gray-300 text-sm hover:bg-gray-100"
+                      >
+                        Add Unit
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setIsRequestingUnit(true);
+                        setShowDropdown(false);
+                      }}
+                      className="block w-full px-4 py-2 text-left text-white bg-gray-500 text-sm hover:bg-gray-100 hover:text-black"
+                    >
+                      Request Unit
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile Floating Button with FAB Menu */}
+              <div className="sm:hidden fixed bottom-5 right-5 z-50">
+                <div className="relative">
+                  <button
+                    onClick={() => setShowDropdown((prev) => !prev)}
+                    className="inline-flex items-center justify-center rounded-full bg-blue-600 p-4 text-white shadow-lg hover:bg-blue-700"
+                    aria-label="FAB Menu"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                  </button>
+                  {showDropdown && (
+                    <div className="absolute bottom-16 right-0 bg-white border rounded shadow-2xl w-40">
+                      {profile?.role === "system_administrator" && (
+                        <button
+                          onClick={() => {
+                            setIsAddingUnit(true);
+                            setShowDropdown(false);
+                          }}
+                          className="block w-full px-4 py-2 text-left text-sm text-white bg-gray-500 hover:bg-gray-100"
+                        >
+                          Add Unit
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          setIsRequestingUnit(true);
+                          setShowDropdown(false);
+                        }}
+                        className="block w-full px-4 py-2 text-left text-sm bg-gray-300 hover:bg-gray-100 hover:text-black"
+                      >
+                        Request Unit
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </>
           ) : (
-            ["operational_administrator", "department_manager"].includes(
-              profile?.role
-            ) && (
+            profile?.role === "department_manager" && (
               <>
+                {/* Department Manager – Only Request Unit */}
                 <button
                   className="hidden sm:flex order-4 rounded-md bg-gray-800 px-3 py-1 text-white hover:bg-gray-900 items-center gap-1"
                   onClick={() => setIsRequestingUnit(true)}
                 >
                   <FiPlus /> Request Unit
                 </button>
-
                 <button
                   onClick={() => setIsRequestingUnit(true)}
                   className="fixed bottom-5 right-5 z-50 inline-flex items-center justify-center rounded-full bg-blue-600 p-4 text-white shadow-lg hover:bg-blue-700 sm:hidden"
@@ -430,7 +516,7 @@ const UnitList = ({ assetDetails }) => {
             </thead>
           </table>
         ) : (
-        <table className="w-full border-collapse mt-5 bg-gray-100">
+          <table className="w-full border-collapse mt-5 bg-gray-100">
             <thead className="bg-gray-200">
               <tr>
                 <th className="w-[25%] text-start p-2">Requested Quantity</th>
@@ -447,149 +533,181 @@ const UnitList = ({ assetDetails }) => {
 
       <div className="flex-grow overflow-y-auto bg-white px-4 rounded-b-lg">
         {activeTab === "units" ? (
-        <table className="w-full border-collapse table-fixed">
-          <tbody>
-            {paginatedUnitData.length > 0 ? (
-              paginatedUnitData.map((unit) => (
-                <tr key={unit.id} onClick={() => setSelectedUnit(unit)}>
+          <table className="w-full border-collapse table-fixed">
+            <tbody>
+              {paginatedUnitData.length > 0 ? (
+                paginatedUnitData.map((unit) => (
+                  <tr key={unit.id} onClick={() => setSelectedUnit(unit)}>
+                    <td
+                      className={`w-[25%] border-b border-gray-300 py-2 truncate`}
+                    >
+                      {unit.unitNumber}
+                    </td>
+                    <td
+                      className={`hidden sm:table-cell w-[25%] border-b border-gray-300 py-2 truncate`}
+                    >
+                      {departments[unit.department] ||
+                        (unit.department === "in_stock"
+                          ? "Inventory - On Stock"
+                          : "Unknown")}
+                    </td>
+                    <td
+                      className={`w-[25%] border-b border-gray-300 py-2 truncate`}
+                    >
+                      <span
+                        className={`status-indicator status-${
+                          unit.status?.toLowerCase().replace(/\s+/g, "-") ||
+                          "unknown"
+                        }`}
+                      ></span>
+                      {unit.status}
+                    </td>
+                    <td
+                      className={`hidden sm:table-cell w-[25%] border-b border-gray-300 py-2 truncate`}
+                    >
+                      {unit.dateUpdated
+                        ? timeAgo(unit.dateUpdated.toDate())
+                        : "N/A"}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
                   <td
-                    className={`w-[25%] border-b border-gray-300 py-2 truncate`}
+                    colSpan="4"
+                    className="px-3 py-6 text-center text-gray-500"
                   >
-                    {unit.unitNumber}
-                  </td>
-                  <td
-                    className={`hidden sm:table-cell w-[25%] border-b border-gray-300 py-2 truncate`}
-                  >
-                    {departments[unit.department] ||
-                      (unit.department === "on_stock"
-                        ? "Inventory - On Stock"
-                        : "Unknown")}
-                  </td>
-                  <td
-                    className={`w-[25%] border-b border-gray-300 py-2 truncate`}
-                  >
-                    <span
-                      className={`status-indicator status-${
-                        unit.status?.toLowerCase().replace(/\s+/g, "-") ||
-                        "unknown"
-                      }`}
-                    ></span>
-                    {unit.status}
-                  </td>
-                  <td
-                    className={`hidden sm:table-cell w-[25%] border-b border-gray-300 py-2 truncate`}
-                  >
-                    {unit.dateUpdated
-                      ? timeAgo(unit.dateUpdated.toDate())
-                      : "N/A"}
+                    No Unit found
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="4" className="px-3 py-6 text-center text-gray-500">
-                  No Unit found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
         ) : (
-        <table className="w-full border-collapse table-fixed">
-          <tbody>
-            {paginatedRequestData.length > 0 ? (
-              paginatedRequestData.map((request) => (
-                <tr key={request.id} onClick={() => setSelectedRequest(request)}>
-                  <td
-                    className={`w-[25%] border-b border-gray-300 py-2 truncate`}
+          <table className="w-full border-collapse table-fixed">
+            <tbody>
+              {paginatedRequestData.length > 0 ? (
+                paginatedRequestData.map((request) => (
+                  <tr
+                    key={request.id}
+                    onClick={() => setSelectedRequest(request)}
                   >
-                    {request.quantity}
-                  </td>
+                    <td
+                      className={`w-[25%] border-b border-gray-300 py-2 truncate`}
+                    >
+                      {request.quantity}
+                    </td>
+                    <td
+                      className={`w-[25%] border-b border-gray-300 py-2 truncate`}
+                    >
+                      <span
+                        className={`status-indicator status-${
+                          request.status?.toLowerCase().replace(/\s+/g, "-") ||
+                          "unknown"
+                        }`}
+                      ></span>
+                      {request.status}
+                    </td>
+                    <td
+                      className={`w-[25%] border-b border-gray-300 py-2 truncate`}
+                    >
+                      {getUserFullName(request.requestedBy)}
+                    </td>
+                    <td
+                      className={`hidden sm:table-cell w-[25%] border-b border-gray-300 py-2 truncate`}
+                    >
+                      {request.dateCreated
+                        ? timeAgo(request.dateCreated.toDate())
+                        : "N/A"}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
                   <td
-                    className={`w-[25%] border-b border-gray-300 py-2 truncate`}
+                    colSpan="4"
+                    className="px-3 py-6 text-center text-gray-500"
                   >
-                    <span
-                      className={`status-indicator status-${
-                        request.status?.toLowerCase().replace(/\s+/g, "-") ||
-                        "unknown"
-                      }`}
-                    ></span>
-                    {request.status}
-                  </td>
-                  <td
-                    className={`w-[25%] border-b border-gray-300 py-2 truncate`}
-                  >
-                    {request.requestedBy}
-                  </td>
-                  <td
-                    className={`hidden sm:table-cell w-[25%] border-b border-gray-300 py-2 truncate`}
-                  >
-                    {request.dateCreated
-                      ? timeAgo(request.dateCreated.toDate())
-                      : "N/A"}
+                    No Request found
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="4" className="px-3 py-6 text-center text-gray-500">
-                  No Request found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
         )}
       </div>
 
       {/* Pagination */}
-      {activeTab === "units" ? totalUnitPages : totalRequestPages > 1 && (
-        <div className="sticky bottom-0 mt-2 flex w-full items-center justify-center gap-2 rounded-b-lg bg-white py-2">
-          <button
-            className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => setCurrentPage(1)}
-            disabled={currentPage === 1}
-          >
-            {"<<"}
-          </button>
-          <button
-            className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-          >
-            {"<"}
-          </button>
+      {activeTab === "units"
+        ? totalUnitPages
+        : totalRequestPages > 1 && (
+            <div className="sticky bottom-0 mt-2 flex w-full items-center justify-center gap-2 rounded-b-lg bg-white py-2">
+              <button
+                className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                {"<<"}
+              </button>
+              <button
+                className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                {"<"}
+              </button>
 
-          {pageButtons.map((pageNum) => (
-            <button
-              key={pageNum}
-              className={`rounded border px-3 py-1 ${
-                pageNum === currentPage
-                  ? "border-blue-600 bg-blue-600 text-white"
-                  : "border-gray-300 hover:bg-gray-200"
-              }`}
-              onClick={() => setCurrentPage(pageNum)}
-            >
-              {pageNum}
-            </button>
-          ))}
+              {pageButtons.map((pageNum) => (
+                <button
+                  key={pageNum}
+                  className={`rounded border px-3 py-1 ${
+                    pageNum === currentPage
+                      ? "border-blue-600 bg-blue-600 text-white"
+                      : "border-gray-300 hover:bg-gray-200"
+                  }`}
+                  onClick={() => setCurrentPage(pageNum)}
+                >
+                  {pageNum}
+                </button>
+              ))}
 
-          <button
-            className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => setCurrentPage((p) => Math.min(activeTab === "units" ? totalUnitPages : totalRequestPages, p + 1))}
-            disabled={currentPage === activeTab === "units" ? totalUnitPages : totalRequestPages}
-          >
-            {">"}
-          </button>
-          <button
-            className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => setCurrentPage(activeTab === "units" ? totalUnitPages : totalRequestPages)}
-            disabled={currentPage === activeTab === "units" ? totalUnitPages : totalRequestPages}
-          >
-            {">>"}
-          </button>
-        </div>
-      )}
+              <button
+                className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() =>
+                  setCurrentPage((p) =>
+                    Math.min(
+                      activeTab === "units"
+                        ? totalUnitPages
+                        : totalRequestPages,
+                      p + 1
+                    )
+                  )
+                }
+                disabled={
+                  (currentPage === activeTab) === "units"
+                    ? totalUnitPages
+                    : totalRequestPages
+                }
+              >
+                {">"}
+              </button>
+              <button
+                className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() =>
+                  setCurrentPage(
+                    activeTab === "units" ? totalUnitPages : totalRequestPages
+                  )
+                }
+                disabled={
+                  (currentPage === activeTab) === "units"
+                    ? totalUnitPages
+                    : totalRequestPages
+                }
+              >
+                {">>"}
+              </button>
+            </div>
+          )}
 
       {isAddingUnit && (
         <AddAssetUnit
@@ -617,7 +735,7 @@ const UnitList = ({ assetDetails }) => {
           requestDetails={selectedRequest}
           onClose={() => setSelectedRequest(null)}
         />
-      )}  
+      )}
 
       {showFilterModal && (
         <div
