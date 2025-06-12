@@ -170,7 +170,7 @@ const AddRequestUnit = ({ assetDetails, onClose }) => {
         {currentStep === 1 && (
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className={`${["system_administrator", "operational_administrator"].includes(profile.role) ? "col-span-3" : "col-span-1"} md:col-span-3`}>
+              <div className={`${["system_administrator", "operational_administrator"].includes(profile.role) ? "col-span-1 md:col-span-1" : "col-span-1 md:col-span-3"} `}>
                 <label className="block text-sm font-medium text-gray-700">
                   Quantity
                 </label>

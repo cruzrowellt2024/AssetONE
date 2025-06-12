@@ -5,6 +5,7 @@ import AddUser from "./AddUser";
 import UserDetails from "../UserManagement/UserDetails";
 import Modal from "../../../components/Modal/Modal";
 import { FiFilter, FiPlus, FiX } from "react-icons/fi";
+import { useAuth } from "../../../context/AuthContext";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -13,6 +14,8 @@ const UserManagement = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+
+  const { profile } = useAuth();
 
   const [roleFilters, setRoleFilters] = useState({
     system_administrator: false,
@@ -63,7 +66,7 @@ const UserManagement = () => {
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
-      collection(db, "titles"),
+      collection(db, "positions"),
       (querySnapshot) => {
         const titlesMap = {};
         querySnapshot.docs.forEach((doc) => {
@@ -72,7 +75,7 @@ const UserManagement = () => {
         setTitles(titlesMap);
       },
       (error) => {
-        console.error("Error fetching titles:", error);
+        console.error("Error fetching position:", error);
         setTitles({});
       }
     );
@@ -156,7 +159,12 @@ const UserManagement = () => {
     const matchesStatus =
       selectedStatuses.length === 0 || selectedStatuses.includes(user.status);
 
-    return matchesSearch && matchesRole && matchesStatus;
+    const isTeam =
+      (profile?.role === "operational_administrator" && (user.role === profile?.role || user.role === "department_manager")) ||
+      (profile?.role === "maintenance_head" && (user.role === profile?.role || user.role === "maintenance_technician")) ||
+      profile?.role === "system_administrator";
+
+    return matchesSearch && matchesRole && matchesStatus && isTeam;
   });
 
   // Pagination logic
@@ -247,9 +255,13 @@ const UserManagement = () => {
           <thead>
             <tr>
               <th className="w-[25%] text-start">Name</th>
-              <th className="hidden sm:table-cell w-[20%] text-start">Position</th>
+              <th className="hidden sm:table-cell w-[20%] text-start">
+                Position
+              </th>
               <th className="w-[20%] text-start">Role</th>
-              <th className="hidden sm:table-cell w-[17.5%] text-start">Updated</th>
+              <th className="hidden sm:table-cell w-[17.5%] text-start">
+                Updated
+              </th>
               <th className="hidden sm:table-cell w-[17.5%] text-start">
                 Created
               </th>
@@ -276,7 +288,7 @@ const UserManagement = () => {
                   <td
                     className={`hidden sm:table-cell w-[20%] border-b border-gray-300 py-2 truncate`}
                   >
-                    {titles[user.title] || user.title}
+                    {titles[user.position] || user.position}
                   </td>
                   <td
                     className={`w-[20%] border-b border-gray-300 py-2 truncate`}
@@ -359,7 +371,12 @@ const UserManagement = () => {
         )}
       </div>
 
-      {selectedUser && <UserDetails userDetails={selectedUser} onClose={() => setSelectedUser(null)} />}
+      {selectedUser && (
+        <UserDetails
+          userDetails={selectedUser}
+          onClose={() => setSelectedUser(null)}
+        />
+      )}
 
       {isAddingUser && <AddUser onClose={() => setIsAddingUser(false)} />}
 

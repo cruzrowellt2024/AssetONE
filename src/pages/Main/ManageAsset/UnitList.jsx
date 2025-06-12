@@ -319,7 +319,7 @@ const UnitList = ({ assetDetails }) => {
 
   return (
     <>
-      <div className="sticky top-0 flex-shrink-0 min-h-[5rem] border-t-2 border-t-gray-200 mt-2">
+      <div className="sticky top-0 flex-shrink-0 min-h-[5rem] border-t-2 border-t-gray-200 mt-2 bg-white">
         <div className="flex flex-wrap items-center gap-2 mt-2 mb-2 px-2">
           <div className="flex-1 min-w-[200px] order-1 mr-auto">
             <div className="flex items-center gap-4">
@@ -416,7 +416,7 @@ const UnitList = ({ assetDetails }) => {
               </div>
 
               {/* Mobile Floating Button with FAB Menu */}
-              <div className="sm:hidden fixed bottom-5 right-5 z-50">
+              <div className="sm:hidden fixed bottom-5 right-5 z-100">
                 <div className="relative">
                   <button
                     onClick={() => setShowDropdown((prev) => !prev)}
@@ -635,79 +635,74 @@ const UnitList = ({ assetDetails }) => {
             </tbody>
           </table>
         )}
+        {activeTab === "units" || totalRequestPages > 1 ? (
+        <div className="sticky bottom-0 mt-2 flex w-full items-center justify-center gap-2 rounded-b-lg bg-white py-2">
+          <button
+            className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+          >
+            {"<<"}
+          </button>
+          <button
+            className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+          >
+            {"<"}
+          </button>
+
+          {pageButtons.map((pageNum) => (
+            <button
+              key={pageNum}
+              className={`rounded border px-3 py-1 ${
+                pageNum === currentPage
+                  ? "border-blue-600 bg-blue-600 text-white"
+                  : "border-gray-300 hover:bg-gray-200"
+              }`}
+              onClick={() => setCurrentPage(pageNum)}
+            >
+              {pageNum}
+            </button>
+          ))}
+
+          <button
+            className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() =>
+              setCurrentPage((p) =>
+                Math.min(
+                  activeTab === "units" ? totalUnitPages : totalRequestPages,
+                  p + 1
+                )
+              )
+            }
+            disabled={
+              currentPage ===
+              (activeTab === "units" ? totalUnitPages : totalRequestPages)
+            }
+          >
+            {">"}
+          </button>
+          <button
+            className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() =>
+              setCurrentPage(
+                activeTab === "units" ? totalUnitPages : totalRequestPages
+              )
+            }
+            disabled={
+              currentPage ===
+              (activeTab === "units" ? totalUnitPages : totalRequestPages)
+            }
+          >
+            {">>"}
+          </button>
+        </div>
+      ) : null}
       </div>
 
       {/* Pagination */}
-      {activeTab === "units"
-        ? totalUnitPages
-        : totalRequestPages > 1 && (
-            <div className="sticky bottom-0 mt-2 flex w-full items-center justify-center gap-2 rounded-b-lg bg-white py-2">
-              <button
-                className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-              >
-                {"<<"}
-              </button>
-              <button
-                className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-              >
-                {"<"}
-              </button>
-
-              {pageButtons.map((pageNum) => (
-                <button
-                  key={pageNum}
-                  className={`rounded border px-3 py-1 ${
-                    pageNum === currentPage
-                      ? "border-blue-600 bg-blue-600 text-white"
-                      : "border-gray-300 hover:bg-gray-200"
-                  }`}
-                  onClick={() => setCurrentPage(pageNum)}
-                >
-                  {pageNum}
-                </button>
-              ))}
-
-              <button
-                className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
-                onClick={() =>
-                  setCurrentPage((p) =>
-                    Math.min(
-                      activeTab === "units"
-                        ? totalUnitPages
-                        : totalRequestPages,
-                      p + 1
-                    )
-                  )
-                }
-                disabled={
-                  (currentPage === activeTab) === "units"
-                    ? totalUnitPages
-                    : totalRequestPages
-                }
-              >
-                {">"}
-              </button>
-              <button
-                className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
-                onClick={() =>
-                  setCurrentPage(
-                    activeTab === "units" ? totalUnitPages : totalRequestPages
-                  )
-                }
-                disabled={
-                  (currentPage === activeTab) === "units"
-                    ? totalUnitPages
-                    : totalRequestPages
-                }
-              >
-                {">>"}
-              </button>
-            </div>
-          )}
+      
 
       {isAddingUnit && (
         <AddAssetUnit

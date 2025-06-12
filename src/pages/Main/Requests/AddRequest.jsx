@@ -6,6 +6,7 @@ import { fetchPositionById } from "../../../firebase/usertitleservices";
 import { FiArrowLeft } from "react-icons/fi";
 import MessageModal from "../../../components/Modal/MessageModal";
 import { fetchAssets } from "../../../firebase/assetservices";
+import SpinnerOverlay from "../../../components/SpinnerOverlay";
 
 const AddRequest = ({ assetId, onClose }) => {
   const [requestType, setRequestType] = useState("");
@@ -19,21 +20,23 @@ const AddRequest = ({ assetId, onClose }) => {
   const [enrichedProfile, setEnrichedProfile] = useState(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [loadingAsset, setLoadingAsset] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadAsset = async () => {
-      try {
-        const asset = await fetchUnitById(assetId);
-        setReportedUnit(asset);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoadingAsset(false);
-      }
-    };
+    if (assetId) {
+      const loadAsset = async () => {
+        try {
+          const unit = await fetchUnitById(assetId);
+          setReportedUnit(unit);
+        } catch (error) {
+          console.error(error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
 
-    if (assetId) loadAsset();
+      loadAsset();
+    }
   }, [assetId]);
 
   useEffect(() => {
@@ -60,8 +63,6 @@ const AddRequest = ({ assetId, onClose }) => {
     const fetchAssetName = async () => {
       if (reportedUnit.asset) {
         try {
-          // Import fetchAssets at the top if not yet imported
-          // import { fetchAssets } from "../../../firebase/assetunitservices";
           const assets = await fetchAssets();
           const found = assets.find((a) => a.id === reportedUnit.asset);
           setAssetName(found ? found.name : reportedUnit.asset);
@@ -77,21 +78,23 @@ const AddRequest = ({ assetId, onClose }) => {
 
   const handleAddRequest = async () => {
     if (!requestType || !description.trim() || !reportedUnit) {
-      alert("All fields are required!");
+      setError("All fields are required!");
       return;
     }
 
     if (requestType === "Maintenance Request") {
       if (!urgency || !impact) {
-        alert("All fields are required!");
+        setError("All fields are required!");
         return;
       }
     } else if (requestType === "Asset Update Request") {
       if (!status) {
-        alert("All fields are required!");
+        setError("All fields are required!");
         return;
       }
     }
+
+    setIsLoading(true);
 
     try {
       const priorityScore = calculatePriorityScore({
@@ -103,16 +106,17 @@ const AddRequest = ({ assetId, onClose }) => {
       let assetStatus = status;
       if (requestType === "Maintenance Request") assetStatus = "In Repair";
 
-      const assetData = reportedUnit;
-
       await addRequest(
         requestType,
+        reportedUnit.asset,
         reportedUnit.id,
         description,
         priorityScore,
         reportedBy,
         assetStatus
       );
+
+      const assetData = reportedUnit;
 
       const updatedAsset = {
         ...assetData,
@@ -121,15 +125,17 @@ const AddRequest = ({ assetId, onClose }) => {
 
       await updateUnit(updatedAsset, profile.id);
 
-      alert("Request was added successfully!");
+      setMessage("Request was added successfully!");
 
       setRequestType("");
       setDescription("");
-      onClose();
     } catch (error) {
+
       console.error("Error adding request:", error);
-      alert("Failed to add request. Please try again.");
+      setError("Failed to add request. Please try again.");
     }
+    
+    setIsLoading(false);
   };
 
   function calculatePriorityScore({ titleScore, urgency, impact }) {
@@ -166,16 +172,9 @@ const AddRequest = ({ assetId, onClose }) => {
   const clearMessages = () => {
     setError("");
     setMessage("");
-    onClose();
   };
 
-  if (loadingAsset) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-        <div className="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-16 w-16"></div>
-      </div>
-    );
-  }
+  if (!setReportedUnit) return;
 
   return (
     <>
@@ -209,6 +208,7 @@ const AddRequest = ({ assetId, onClose }) => {
               </h3>
             </div>
 
+            {isLoading && <SpinnerOverlay logo={"A"} />}
             <div className="space-y-5">
               <div className="flex flex-col">
                 <label className="mb-1 font-medium text-gray-700">

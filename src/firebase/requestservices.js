@@ -47,13 +47,14 @@ const generateRequestID = async () => {
     }
 };
 
-const addRequest = async (requestType, reportedAsset, description, priorityScore, reportedBy, assetStatus) => {
+const addRequest = async (requestType, reportedAsset, reportedUnit, description, priorityScore, reportedBy, assetStatus) => {
     try {
         const newRequestID = await generateRequestID();
 
         await setDoc(doc(db, "requests", newRequestID), {
             requestType,
             reportedAsset,
+            reportedUnit,
             description,
             priorityScore,
             reportedBy,
@@ -77,6 +78,7 @@ const updateRequest = async (selectedRequest, status, logby) => {
         await setDoc(doc(db, "requests", selectedRequest.id), {
             requestType: selectedRequest.requestType,
             reportedAsset: selectedRequest.reportedAsset,
+            reportedUnit: selectedRequest.reportedUnit,
             description: selectedRequest.description,
             priorityScore: selectedRequest.priorityScore,
             reportedBy: selectedRequest.reportedBy,

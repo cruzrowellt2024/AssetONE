@@ -2,7 +2,7 @@ import { Timestamp } from "firebase/firestore";
 import { useState, useEffect } from "react";
 import { updateRequest } from "../../../firebase/requestservices";
 import { addSchedule } from "../../../firebase/maintenancescheduleservices";
-import { fetchUsers } from "../../../firebase/userservices";
+import { fetchUsers, updateUserStatus } from "../../../firebase/userservices";
 import { updateUnit, fetchUnitById } from "../../../firebase/assetunitservices";
 import { useAuth } from "../../../context/AuthContext";
 import {
@@ -51,29 +51,6 @@ const RequestDetails = ({ requestDetails, onClose }) => {
     profile?.role === "system_administrator";
 
   useEffect(() => {
-    if (reportedUnit?.department) {
-      loadDropdownData(fetchUsers, setTechnicians);
-    }
-  }, [reportedUnit]);
-
-  const loadDropdownData = async (fetchFn, setFn) => {
-    try {
-      const data = await fetchFn();
-      const techniciansOnly = data.filter(
-        (user) => user.role === "maintenance_technician" //&& user.department === reportedUnit.department
-      );
-      const mappedTechnicians = techniciansOnly.reduce((acc, item) => {
-        acc[item.id] = `${item.firstName} ${item.lastName}`;
-        return acc;
-      }, {});
-      setFn(mappedTechnicians);
-    } catch (error) {
-      console.error(`Error fetching data:`, error);
-      setFn({});
-    }
-  };
-
-  useEffect(() => {
     if (requestDetails) {
       setSelectedRequest(requestDetails);
 
@@ -94,14 +71,34 @@ const RequestDetails = ({ requestDetails, onClose }) => {
           setUnitNumber(unit.unitNumber);
         } catch (error) {
           console.error("Failed to fetch unit data:", error);
-          setAssetName("Unknown Unit");
+          setUnitNumber("Unknown Unit");
         }
       };
 
       fetchAssetData();
       fetchUnitData();
+      loadDropdownData(fetchUsers, setTechnicians);
+      console.log(requestDetails);
     }
   }, [requestDetails]);
+
+  const loadDropdownData = async (fetchFn, setFn) => {
+    try {
+      const data = await fetchFn();
+      const techniciansOnly = data.filter(
+        (user) =>
+          user.role === "maintenance_technician" && user.status === "Available"
+      );
+      const mappedTechnicians = techniciansOnly.reduce((acc, item) => {
+        acc[item.id] = `${item.firstName} ${item.lastName}`;
+        return acc;
+      }, {});
+      setFn(mappedTechnicians);
+    } catch (error) {
+      console.error(`Error fetching data:`, error);
+      setFn({});
+    }
+  };
 
   const handleConfirmSchedule = async () => {
     if (!selectedRequest) return;
@@ -164,6 +161,7 @@ const RequestDetails = ({ requestDetails, onClose }) => {
         };
 
         await updateUnit(updatedUnit, profile?.id);
+
         setMessage("Request approved. Maintenance schedule was created.");
       }
       updateRequest(selectedRequest, "Approved", profile?.id);
@@ -212,19 +210,17 @@ const RequestDetails = ({ requestDetails, onClose }) => {
   };
 
   const handleAddTechnician = () => {
-    if (!selectedTechnicianId) return;
+    const availableTechnicians = Object.entries(technicians).filter(
+      ([id]) => !assignedTechnicians.find((t) => t.id === id)
+    );
 
-    if (assignedTechnicians.find((t) => t.id === selectedTechnicianId)) {
-      setError("Technician already assigned.");
+    if (availableTechnicians.length === 0) {
+      setError("No more available technicians to assign.");
       return;
     }
 
-    const name = technicians[selectedTechnicianId];
-    setAssignedTechnicians([
-      ...assignedTechnicians,
-      { id: selectedTechnicianId, name },
-    ]);
-    setSelectedTechnicianId("");
+    const [nextTechId, name] = availableTechnicians[0]; // auto-pick the first one
+    setAssignedTechnicians((prev) => [...prev, { id: nextTechId, name }]);
   };
 
   const handleRemoveTechnician = (idToRemove) => {
@@ -330,7 +326,7 @@ const RequestDetails = ({ requestDetails, onClose }) => {
         />
 
         {isLoading && <SpinnerOverlay logo="A" />}
-        
+
         <div className="overflow-y-auto flex-1" style={{ minHeight: 0 }}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6">
             {!isRequestApproved ? (
@@ -358,18 +354,18 @@ const RequestDetails = ({ requestDetails, onClose }) => {
                       readOnly
                     />
                   </div>
-                  
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Request Type:
-                  </label>
-                  <input
-                    type="text"
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-100"
-                    value={selectedRequest.requestType || ""}
-                    readOnly
-                  />
-                </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Request Type:
+                    </label>
+                    <input
+                      type="text"
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-100"
+                      value={selectedRequest.requestType || ""}
+                      readOnly
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -423,23 +419,11 @@ const RequestDetails = ({ requestDetails, onClose }) => {
                   <label className="block text-sm font-medium text-gray-700 mb-1 md:mb-0">
                     Assign Technician:
                   </label>
-                  <select
-                    className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    value={selectedTechnicianId}
-                    onChange={(e) => setSelectedTechnicianId(e.target.value)}
-                  >
-                    <option value="">Select Technician</option>
-                    {Object.entries(technicians).map(([id, fullName]) => (
-                      <option key={id} value={id}>
-                        {fullName}
-                      </option>
-                    ))}
-                  </select>
                   <button
-                    className="ml-0 md:ml-2 px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 text-white transition"
+                    className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 text-white transition"
                     onClick={handleAddTechnician}
                   >
-                    Add
+                    Auto-Assign Technician
                   </button>
                 </div>
 

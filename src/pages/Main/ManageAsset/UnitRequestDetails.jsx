@@ -22,12 +22,16 @@ import {
 import { useAuth } from "../../../context/AuthContext";
 import { fetchUsers } from "../../../firebase/userservices";
 import { fetchAssets } from "../../../firebase/assetservices";
+import { fetchVendors } from "../../../firebase/vendorservices";
 
 const UnitRequestDetails = ({ requestDetails, onClose }) => {
   const [selectedUnitRequest, setSelectedUnitRequest] = useState(null);
   const [requestSpecs, setRequestSpecs] = useState([]);
   const [units, setUnits] = useState([]);
   const [users, setUsers] = useState([]);
+  const [vendors, setVendors] = useState([]);
+  const [assetVendor, setAssetVendor] = useState("");
+  const [acquisationCost, setAcquisationCost] = useState(0);
   const [remarks, setRemarks] = useState([]);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -35,41 +39,45 @@ const UnitRequestDetails = ({ requestDetails, onClose }) => {
   const { profile } = useAuth();
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showUpdateModal, setShowConfirmRequestModal] = useState(false);
+  const [isConfirmingAcquisation, setIsConfirmingAcquisation] = useState(false);
 
   useEffect(() => {
     if (requestDetails) {
       setSelectedUnitRequest(requestDetails);
       getData(requestDetails.id);
     }
-    console.log("Request Details:", requestDetails);
   }, [requestDetails]);
 
   const getData = async (requestId) => {
     setIsLoading(true);
     try {
-      const requestData = await fetchRequestSpecs(requestId);
-      const userData = await fetchUsers();
-      const unitData = await fetchUnits();
-      setRequestSpecs(requestData || []);
+      const requestData = (await fetchRequestSpecs(requestId)) ?? [];
+      const userData = (await fetchUsers()) ?? [];
+      const unitData = (await fetchUnits()) ?? [];
+      const vendorData = (await fetchVendors()) ?? [];
+      setRequestSpecs(Array.isArray(requestData) ? requestData : []);
       setUsers(userData || []);
       setUnits(unitData || []);
+      setVendors(Array.isArray(vendorData) ? vendorData : []);
     } catch (error) {
       console.error("Error fetching data:", error);
       setRequestSpecs([]);
       setUsers([]);
-      setUnits();
+      setUnits([]);
+      setVendors([]);
     }
     setIsLoading(false);
   };
 
-  const handleAcquiredUnitClick = async() => {
+  const handleAcquiredUnitClick = async () => {
     if (!selectedUnitRequest) {
       setError("Invalid request selected.");
       return;
     }
 
-    await handleAcquiredUnit();
-  }
+    if (!isConfirmingAcquisation) setIsConfirmingAcquisation(true);
+    else await handleAcquiredUnit();
+  };
 
   const handleApproveRequest = async () => {
     if (!selectedUnitRequest) {
@@ -91,54 +99,51 @@ const UnitRequestDetails = ({ requestDetails, onClose }) => {
   };
 
   const handleAcquiredUnit = async () => {
-  if (!selectedUnitRequest) {
-    setError("Invalid request selected.");
-    return;
-  }
-
-  const quantity = selectedUnitRequest.quantity;
-  const today = new Date().toISOString().split("T")[0]; // yyyy-mm-dd
-
-  const department = getDepartment(selectedUnitRequest.requestedBy);
-  const location = getLocation(selectedUnitRequest.requestedBy);
-
-  const unitTemplate = {
-    asset: selectedUnitRequest.asset,
-    dateAcquired: today,
-    cost: selectedUnitRequest.estimatedCostPerUnit ?? 0,
-    status: "In Stock",
-    condition: "Good",
-    department,
-    location,
-    vendor: "", // You can change this later with a vendor picker or form
-    specs: [],  // Same, you can assign real specs after confirmation
-    addedBy: profile?.id ?? "System",
-    requestedBy: selectedUnitRequest.requestedBy,
-    isLegacy: false,
-  };
-
-  setIsLoading(true);
-
-  try {
-    const createPromises = [];
-
-    for (let i = 0; i < quantity; i++) {
-      createPromises.push(addUnit(unitTemplate, profile?.id));
+    if (!selectedUnitRequest) {
+      setError("Invalid request selected.");
+      return;
     }
 
-    await Promise.all(createPromises);
+    const quantity = selectedUnitRequest?.quantity;
+    const today = new Date().toISOString().split("T")[0];
 
-    await updateRequestUnit(selectedUnitRequest, "", "Acquired", profile?.id);
-    setMessage("Units successfully acquired into stock.");
-    setTimeout(() => onClose(), 3000);
-  } catch (error) {
-    console.error("Acquisition Error:", error);
-    setError("Failed to acquire units. Please try again.");
-  }
+    const unitTemplate = {
+      asset: selectedUnitRequest.asset,
+      dateAcquired: today,
+      cost: acquisationCost,
+      status: "In Stock",
+      condition: "Good",
+      department: "in_stock",
+      location: "in_stock",
+      vendor: assetVendor,
+      specs: [],
+      addedBy: profile?.id ?? "System",
+      requestedBy: selectedUnitRequest.requestedBy,
+      isLegacy: false,
+    };
 
-  setIsLoading(false);
-};
+    setIsLoading(true);
 
+    try {
+      const createPromises = [];
+
+      for (let i = 0; i < quantity; i++) {
+        console.log(`Creating unit ${i + 1} of ${quantity}`);
+        createPromises.push(addUnit(unitTemplate, profile?.id));
+      }
+
+      await Promise.all(createPromises);
+
+      await updateRequestUnit(selectedUnitRequest, "", "Acquired", profile?.id);
+      setMessage("Units successfully acquired into stock.");
+      setTimeout(() => onClose(), 3000);
+    } catch (error) {
+      console.error("Acquisition Error:", error);
+      setError("Failed to acquire units. Please try again.");
+    }
+
+    setIsLoading(false);
+  };
 
   const handleDeliverUnit = async () => {
     if (!selectedUnitRequest) {
@@ -171,7 +176,7 @@ const UnitRequestDetails = ({ requestDetails, onClose }) => {
       const updatePromises = unitsToDeliver.map((unit) => {
         const updatedUnit = {
           ...unit,
-          status: "Deployed",
+          status: "In Use",
           department,
           location,
           requestedBy: selectedUnitRequest.requestedBy,
@@ -369,8 +374,15 @@ const UnitRequestDetails = ({ requestDetails, onClose }) => {
                     title="Acquire"
                   >
                     <FiCheckSquare />
-                    <span className="hidden md:inline">Acquire</span>
+                    <span className="hidden md:inline">
+                      {isConfirmingAcquisation ? "Confirm" : "Acquire"}
+                    </span>
                   </button>
+                ) : selectedUnitRequest?.status === "Delivered" ? (
+                  <div className="flex items-center gap-2 px-5 py-2 rounded bg-gray-700 font-bold text-green-400">
+                    <FiMail />
+                    <span className="hidden md:inline">Delivered</span>
+                  </div>
                 ) : null}
               </div>
             </div>
@@ -400,65 +412,88 @@ const UnitRequestDetails = ({ requestDetails, onClose }) => {
                 clearMessages={clearMessages}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Quantity
-                  </label>
-                  <input
-                    type="number"
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    value={selectedUnitRequest?.quantity || 0}
-                    readOnly
-                  />
-                </div>
+              {!isConfirmingAcquisation ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
+                  <div className={`${(selectedUnitRequest?.estimatedCostPerUnit !== 0 && !selectedUnitRequest?.totalCost !== 0) ? "col-span-1 md:col-span-1" : "col-span-1 md:col-span-3"}`}>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Quantity
+                    </label>
+                    <input
+                      type="number"
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      value={selectedUnitRequest?.quantity || 0}
+                      readOnly
+                    />
+                  </div>
+                  {[
+                    "operational_administrator",
+                    "system_administrator",
+                  ].includes(profile.role) && (selectedUnitRequest?.estimatedCostPerUnit !== 0 && !selectedUnitRequest?.totalCost !== 0) && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Estimated Cost per Unit
+                        </label>
+                        <input
+                          type="number"
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          value={selectedUnitRequest?.estimatedCostPerUnit || 0}
+                          readOnly
+                        />
+                      </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Estimated Cost per Unit
-                  </label>
-                  <input
-                    type="number"
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    value={selectedUnitRequest?.estimatedCostPerUnit || 0}
-                    readOnly
-                  />
-                </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Total Cost
+                        </label>
+                        <input
+                          type="number"
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          value={selectedUnitRequest?.totalCost || 0}
+                          readOnly
+                        />
+                      </div>
+                    </>
+                  )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Total Cost
-                  </label>
-                  <input
-                    type="number"
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    value={selectedUnitRequest?.totalCost || 0}
-                    readOnly
-                  />
-                </div>
+                  {requestSpecs.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 col-span-1 md:col-span-3 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Specification
+                        </label>
+                        <textarea
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none"
+                          value={
+                            requestSpecs.length > 0
+                              ? requestSpecs
+                                  .map((spec) => `${spec.key}: ${spec.value}`)
+                                  .join("\n")
+                              : "No specifications provided"
+                          }
+                          readOnly
+                          rows={Math.max(3, requestSpecs.length)}
+                          placeholder="Specifications will appear here"
+                        />
+                      </div>
 
-                {requestSpecs.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 col-span-1 md:col-span-3 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Specification
-                      </label>
-                      <textarea
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none"
-                        value={
-                          requestSpecs.length > 0
-                            ? requestSpecs
-                                .map((spec) => `${spec.key}: ${spec.value}`)
-                                .join("\n")
-                            : "No specifications provided"
-                        }
-                        readOnly
-                        rows={Math.max(3, requestSpecs.length)}
-                        placeholder="Specifications will appear here"
-                      />
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Reason
+                        </label>
+                        <textarea
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none"
+                          value={
+                            selectedUnitRequest?.reason || "No reason provided"
+                          }
+                          readOnly
+                          rows={3}
+                          placeholder="Enter the reason for this request"
+                        />
+                      </div>
                     </div>
-
-                    <div>
+                  ) : (
+                    <div className="col-span-1 md:col-span-3">
                       <label className="block text-sm font-medium text-gray-700">
                         Reason
                       </label>
@@ -472,24 +507,42 @@ const UnitRequestDetails = ({ requestDetails, onClose }) => {
                         placeholder="Enter the reason for this request"
                       />
                     </div>
-                  </div>
-                ) : (
-                  <div className="col-span-1 md:col-span-3">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Reason
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
+                  <div>
+                    <label className="font-semibold text-gray-700">
+                      Vendor/Supplier
                     </label>
-                    <textarea
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none"
-                      value={
-                        selectedUnitRequest?.reason || "No reason provided"
-                      }
-                      readOnly
-                      rows={3}
-                      placeholder="Enter the reason for this request"
+                    <select
+                      className="w-full border border-gray-300 rounded px-4 py-2"
+                      value={assetVendor}
+                      onChange={(e) => setAssetVendor(e.target.value)}
+                      required
+                    >
+                      <option value="">Select Vendor/Supplier</option>
+                      {Array.isArray(vendors) &&
+                        vendors.map((vendor) => (
+                          <option key={vendor.id} value={vendor.id}>
+                            {vendor.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Cost Per Unit
+                    </label>
+                    <input
+                      type="number"
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      value={acquisationCost}
+                      onChange={(e) => setAcquisationCost(e.target.value)}
                     />
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

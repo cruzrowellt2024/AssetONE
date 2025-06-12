@@ -44,11 +44,12 @@ const MaintenanceHistory = ({ schedules, technicians, onClose }) => {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-lg w-full max-w-xl max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-lg shadow-lg w-full max-w-3xl"
         onClick={(e) => e.stopPropagation()}
+        style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}
       >
-        <div className="bg-gray-600 text-white flex items-center justify-between p-4 rounded-t-lg">
-          <div className="flex items-center gap-3">
+        <div className="bg-gray-800 text-white flex items-center justify-between p-4 rounded-t-lg flex-shrink-0">
+          <div className="flex items-center gap-4">
             <FiArrowLeft className="cursor-pointer" onClick={onClose} />
             <h3 className="text-lg font-semibold">Maintenance History</h3>
           </div>
@@ -56,16 +57,16 @@ const MaintenanceHistory = ({ schedules, technicians, onClose }) => {
 
         {schedules && schedules.length > 0 ? (
           <>
-            <table className="w-full border-collapse text-white mt-5">
-              <thead>
+            <table className="w-full border-collapse mt-5 bg-gray-100">
+              <thead className="bg-gray-200">
                 <tr>
-                  <th className="w-[35%] text-start">Title</th>
-                  <th className="w-[35%] text-start">Type</th>
-                  <th className="w-[35%] text-start">Technician(s)</th>
-                  <th className="w-[35%] text-start">Status</th>
-                  <th className="w-[35%] text-start">Issue</th>
-                  <th className="w-[35%] text-start">Scheduled</th>
-                  <th className="w-[35%] text-start">Completed</th>
+                  <th className="w-[35%] text-start p-2">Title</th>
+                  <th className="w-[35%] text-start p-2">Type</th>
+                  <th className="w-[35%] text-start p-2">Technician(s)</th>
+                  <th className="w-[35%] text-start p-2">Status</th>
+                  <th className="w-[35%] text-start p-2">Issue</th>
+                  <th className="w-[35%] text-start p-2">Scheduled</th>
+                  <th className="w-[35%] text-start p-2">Completed</th>
                 </tr>
               </thead>
               <tbody>
@@ -101,21 +102,23 @@ const MaintenanceHistory = ({ schedules, technicians, onClose }) => {
               </tbody>
             </table>
 
-            <div className="pagination-controls">
+            <div className="flex items-center justify-center gap-4 mt-6">
               <button
-                className="pagination-button"
                 onClick={goToPreviousPage}
                 disabled={currentPage === 1}
+                className="px-4 py-2 rounded-xl border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
                 Previous
               </button>
-              <span>
+
+              <span className="text-sm font-medium text-gray-600">
                 Page {currentPage} of {totalPages}
               </span>
+
               <button
-                className="pagination-button"
                 onClick={goToNextPage}
                 disabled={currentPage === totalPages}
+                className="px-4 py-2 rounded-xl border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
                 Next
               </button>

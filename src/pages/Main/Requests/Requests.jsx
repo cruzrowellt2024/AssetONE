@@ -133,7 +133,7 @@ const Requests = () => {
       selectedStatuses.includes(request.status);
 
     const isReportedBy =
-      request.reportedBy?.includes(profile?.id) || profile?.role === "Admin";
+      request.reportedBy?.includes(profile?.id) || profile?.role === "maintenance_head";
 
     return matchesSearch && matchesStatus && isReportedBy;
   });

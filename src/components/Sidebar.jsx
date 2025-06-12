@@ -114,7 +114,6 @@ const Sidebar = ({
             "finance",
             "department_manager",
             "maintenance_head",
-            "maintenance_technician",
           ]) && (
             <li
               className={`flex items-center h-12 px-4 py-3 hover:bg-gray-700 ${
@@ -138,7 +137,6 @@ const Sidebar = ({
           {shouldShowItem([
             "operational_administrator",
             "maintenance_head",
-            "maintenance_technician",
           ]) && (
             <li
               className={`flex items-center h-12 px-4 py-3 hover:bg-gray-700 ${
@@ -226,7 +224,6 @@ const Sidebar = ({
 
           {/* Asset List */}
           {shouldShowItem([
-            "system_administrator",
             "operational_administrator",
             "finance",
             "department_manager",
@@ -253,7 +250,6 @@ const Sidebar = ({
           {/* Maintenance Schedule */}
           {shouldShowItem([
             "system_administrator",
-            "operational_administrator",
             "maintenance_head",
             "maintenance_technician",
           ]) && (

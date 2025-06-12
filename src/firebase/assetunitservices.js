@@ -12,6 +12,8 @@ import {
   where,
   orderBy,
   limit,
+  runTransaction,
+  increment,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { addActivityLog } from "./activtylogservices";
@@ -30,23 +32,27 @@ const fetchUnits = async () => {
 };
 
 const generateUnitID = async () => {
-  try {
-    const querySnapshot = await getDocs(collection(db, "units"));
-    const unitIds = querySnapshot.docs.map((doc) => doc.id);
+  const counterRef = doc(db, 'metadata', 'unitCounter');
 
-    if (unitIds.length > 0) {
-      const highestID = Math.max(
-        ...unitIds.map((id) => parseInt(id.replace("AU-", "")))
-      );
-      return `AU-${(highestID + 1).toString().padStart(5, "0")}`;
-    } else {
-      return "AU-00001";
+  return await runTransaction(db, async (transaction) => {
+    const counterDoc = await transaction.get(counterRef);
+
+    if (!counterDoc.exists()) {
+      throw new Error('unitCounter document does not exist.');
     }
-  } catch (error) {
-    console.error("Error generating unit ID:", error);
-    return "AU-00001";
-  }
+
+    const currentCount = counterDoc.data().count || 0;
+    const newCount = currentCount + 1;
+
+    transaction.update(counterRef, {
+      count: increment(1),
+    });
+
+    const unitID = `AU-${String(newCount).padStart(5, '0')}`;
+    return unitID;
+  });
 };
+
 
 const generateUnitRequestID = async () => {
   try {
@@ -68,21 +74,22 @@ const generateUnitRequestID = async () => {
 };
 
 const getNextUnitNumber = async (asset) => {
+  const counterRef = doc(db, "assetCounters", asset);
+
   try {
-    const q = query(
-      collection(db, "units"),
-      where("asset", "==", asset),
-      orderBy("unitNumber", "desc"),
-      limit(1)
-    );
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-      const maxUnit = querySnapshot.docs[0].data().unitNumber || 0;
-      return maxUnit + 1;
-    }
-    return 1;
+    const result = await runTransaction(db, async (transaction) => {
+      const snap = await transaction.get(counterRef);
+      const current = snap.exists() ? snap.data().count || 0 : 0;
+      const next = current + 1;
+
+      transaction.set(counterRef, { count: next }, { merge: true });
+
+      return next;
+    });
+
+    return result;
   } catch (error) {
-    console.error("Error getting next unit number:", error);
+    console.error("Transaction failed:", error);
     return 1;
   }
 };
@@ -364,10 +371,18 @@ const fetchUnitDataById = async (unitId) => {
   }
 };
 
+const fetchUnitsByAssetId = async (assetId) => {
+  if(!assetId) return [];
+  const q = query(collection(db, "units"), where("asset", "==", assetId));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+};
+
 export {
   fetchUnits,
   fetchSpecs,
   fetchRequestSpecs,
+  fetchUnitsByAssetId,
   addUnit,
   addRequestUnit,
   updateUnit,

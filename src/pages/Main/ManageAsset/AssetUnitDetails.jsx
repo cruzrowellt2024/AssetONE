@@ -71,7 +71,7 @@ const AssetDetails = ({ unitDetails, onClose }) => {
         const allSchedules = await fetchSchedules();
 
         const filtered = allSchedules.filter((schedule) => {
-          const assetField = schedule.assets;
+          const assetField = schedule.units;
           if (!assetField) return false;
 
           if (Array.isArray(assetField)) {
@@ -311,28 +311,23 @@ const AssetDetails = ({ unitDetails, onClose }) => {
                   </label>
                   <input
                     type="date"
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="mt-1 block w-full rounded-md border border-gray-100 px-3 py-2 text-sm shadow-sm"
                     value={selectedUnit?.dateAcquired || ""}
-                    onChange={(e) =>
-                      setSelectedUnit({
-                        ...selectedUnit,
-                        dateAcquired: e.target.value,
-                      })
-                    }
+                    disabled
+                    tabIndex={-1}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Cost
+                    Acquisation Cost
                   </label>
                   <input
                     type="number"
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="mt-1 block w-full rounded-md border border-gray-100 px-3 py-2 text-sm shadow-sm"
                     value={selectedUnit?.cost || ""}
-                    onChange={(e) =>
-                      setSelectedUnit({ ...selectedUnit, cost: e.target.value })
-                    }
+                    disabled
+                    tabIndex={-1}
                   />
                 </div>
                 <div>
@@ -366,22 +361,12 @@ const AssetDetails = ({ unitDetails, onClose }) => {
                   <label className="block text-sm font-medium text-gray-700">
                     Condition
                   </label>
-                  <select
+                  <input
                     value={selectedUnit.condition || ""}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    onChange={(e) =>
-                      setSelectedUnit({
-                        ...selectedUnit,
-                        condition: e.target.value,
-                      })
-                    }
+                    className="mt-1 block w-full rounded-md border border-gray-100 px-3 py-2 text-sm shadow-sm"
+                    disabled
                   >
-                    <option value="Excellent">Excellent</option>
-                    <option value="Good">Good</option>
-                    <option value="Fair">Fair</option>
-                    <option value="Poor">Poor</option>
-                    <option value="Unserviceable">Unserviceable</option>
-                  </select>
+                  </input>
                 </div>
 
                 <div>
@@ -399,7 +384,7 @@ const AssetDetails = ({ unitDetails, onClose }) => {
                     }
                   >
                     <option value="">Select Department</option>
-                    <option value="on_stock">No Department - On Stock</option>
+                    <option value="in_stock">No Department - On Stock</option>
                     {Object.entries(departments).map(([id, name]) => (
                       <option key={id} value={id}>
                         {name}
@@ -423,7 +408,7 @@ const AssetDetails = ({ unitDetails, onClose }) => {
                     }
                   >
                     <option value="">Select Location</option>
-                    <option value="on_stock">No Location - On Stock</option>
+                    <option value="in_stock">No Location - On Stock</option>
                     {Object.entries(locations).map(([id, name]) => (
                       <option key={id} value={id}>
                         {name}
@@ -536,12 +521,6 @@ const AssetDetails = ({ unitDetails, onClose }) => {
                 className="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-400 transition"
               >
                 Back
-              </button>
-              <button
-                onClick={handleUpdateUnit}
-                className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-500 transition"
-              >
-                Save
               </button>
             </>
           )}

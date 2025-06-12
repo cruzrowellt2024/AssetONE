@@ -106,6 +106,24 @@ const updateUser = async (selectedUser, logby) => {
     }
 };
 
+const updateUserStatus = async ( status, logby) => {
+    if (!logby) return;
+
+    try {
+
+        await setDoc(doc(db, "users", logby), {
+            status: status,
+            dateUpdated: serverTimestamp(),
+        }, { merge: true });
+
+        await addActivityLog(logby, "Update User", `User ID: ${logby}`);
+
+    } catch (error) {
+        console.error("Error updating user:", error);
+        throw error;
+    }
+};
+
 const deleteUser = async (userId, logby) => {
     if (!userId) throw new Error("User ID is required");
 
@@ -133,4 +151,4 @@ const getUserProfileRef = async (uid) => {
     }
   };
 
-export { fetchUsers, addUser, updateUser, deleteUser, getUserProfileRef, fetchUsersByRole };
+export { fetchUsers, addUser, updateUser, updateUserStatus, deleteUser, getUserProfileRef, fetchUsersByRole };

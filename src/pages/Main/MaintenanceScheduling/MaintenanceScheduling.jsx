@@ -57,18 +57,6 @@ const MaintenanceScheduling = () => {
   };
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, "assets"), (snapshot) => {
-      const map = {};
-      snapshot.forEach((doc) => {
-        map[doc.id] = doc.data(); // This stores the whole asset object
-      });
-      setAssetMap(map);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
     const unsubscribe = getSchedulesRealtime();
     return () => unsubscribe();
   }, []);
@@ -109,23 +97,11 @@ const MaintenanceScheduling = () => {
   };
 
   const filteredSchedules = schedules.filter((schedule) => {
-    const assetIds = Array.isArray(schedule.assets)
-      ? schedule.assets
-      : [schedule.assets];
-    const assets = assetIds.map((id) => assetMap[id]).filter(Boolean);
-
-    if (assets.length === 0) return false;
-
-    const assetNames = assets
-      .map((asset) => asset.name?.toLowerCase() || "")
-      .join(" ");
-
     const title = schedule.title?.toLowerCase() || "";
     const type = schedule.maintenanceType?.toLowerCase() || "";
 
     const matchesSearch =
       searchQuery === "" ||
-      assetNames.includes(searchQuery.toLowerCase()) ||
       title.includes(searchQuery.toLowerCase()) ||
       type.includes(searchQuery.toLowerCase());
 
@@ -144,20 +120,20 @@ const MaintenanceScheduling = () => {
       selectedStatuses.includes(schedule.status);
 
     const isAssignedToUser =
-      schedule.assignedTechnicians?.includes(profile.id) ||
-      profile?.role === "Department Manager" ||
-      profile?.role === "Admin";
+      profile &&
+      (schedule.assignedTechnicians?.includes(profile.id) ||
+        profile.role === "maintenance_head" ||
+        profile.role === "system_administrator");
 
-    const matchesDepartment =
-      assets.some((asset) => asset.department === profile?.department) ||
-      profile?.role === "Admin";
-
+        console.log(matchesSearch &&
+      matchesMaintenanceType &&
+      matchesStatus &&
+      isAssignedToUser);
     return (
       matchesSearch &&
       matchesMaintenanceType &&
       matchesStatus &&
-      isAssignedToUser &&
-      matchesDepartment
+      isAssignedToUser
     );
   });
 
@@ -181,6 +157,8 @@ const MaintenanceScheduling = () => {
 
     return pageNumbers;
   };
+
+  if (!profile) return;
 
   const pageButtons = getPageButtons();
 
@@ -258,10 +236,16 @@ const MaintenanceScheduling = () => {
           <thead>
             <tr>
               <th className="w-[20%] text-start">Schedule Title</th>
-              <th className="hidden sm:table-cell w-[20%] text-start">Maintenance Type</th>
+              <th className="hidden sm:table-cell w-[20%] text-start">
+                Maintenance Type
+              </th>
               <th className="w-[20%] text-start">Status</th>
-              <th className="hidden sm:table-cell w-[20%] text-start">Priority Level</th>
-              <th className="hidden sm:table-cell w-[20%] text-start">Scheduled Date</th>
+              <th className="hidden sm:table-cell w-[20%] text-start">
+                Priority Level
+              </th>
+              <th className="hidden sm:table-cell w-[20%] text-start">
+                Scheduled Date
+              </th>
             </tr>
           </thead>
         </table>
@@ -319,7 +303,9 @@ const MaintenanceScheduling = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="px-3 py-6 text-center text-gray-500">No Schedule found</td>
+                <td colSpan="5" className="px-3 py-6 text-center text-gray-500">
+                  No Schedule found
+                </td>
               </tr>
             )}
           </tbody>

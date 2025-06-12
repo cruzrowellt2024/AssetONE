@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Users Collection Rules
+    match /users/{userId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Assets Collection Rules (NEW)
+    match /assets/{assetId} {
+      allow read, write: if request.auth != null; // All authenticated users can read
+    }
+    
+    // Units Collection Rules (NEW)
+    match /units/{unitId} {
+      allow read, write: if request.auth != null; // All authenticated users can read
+    }
+    
+    //Specifications Collection Rules (NEW)
+		match /units/{unitId}/specifications/{specId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    
+    
+    // Requested Units Collection Rules (NEW)
+    match /unit_requests/{unit_requestsId} {
+      allow read, write: if request.auth != null; // All authenticated users can read
+    }
+    
+    //Specifications Collection Rules (NEW)
+		match /unit_requests/{unit_requestsId}/specifications/{specId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Category Collection Rules (NEW)
+    match /categories/{categoriesId} {
+      allow read, write: if request.auth != null; // Allows only authenticated users
+    }
+    
+    // Schedules Collection Rules (NEW)
+    match /schedules/{schedulesId} {
+      allow read, write: if request.auth != null; // Allows only authenticated users
+    }
+    
+    // Requests Collection Rules (NEW)
+    match /requests/{requestId} {
+      allow read, write: if request.auth != null; // Allows only authenticated users
+    }
+    
+    // Locations Collection Rules (NEW)
+    match /locations/{locationId} {
+      allow read, write: if request.auth != null; // Allows only authenticated users
+    }
+    
+    // Vendors Collection Rules (NEW)
+    match /vendors/{vendorId} {
+      allow read, write: if request.auth != null; // Allows only authenticated users
+    }
+    
+    // Departments Collection Rules (NEW)
+    match /departments/{departmentId} {
+      allow read, write: if request.auth != null; // Allows only authenticated users
+    }
+    
+    // Position Collection Rules (NEW)
+    match /positions/{positionId} {
+      allow read, write: if request.auth != null; // Allows only authenticated users
+    }
+    
+    // Logs Collection Rules (NEW)
+    match /activity_log/{activity_logId} {
+      allow read, write: if request.auth != null; // Allows only authenticated users
+    }
+    
+    match /metadata/unitCounter {
+  allow read, write: if request.auth != null;
+}
+match /assetCounters/{asset} {
+  allow read, write: if request.auth != null;
+}
+
+  }
+}
