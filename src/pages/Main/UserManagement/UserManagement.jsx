@@ -160,8 +160,11 @@ const UserManagement = () => {
       selectedStatuses.length === 0 || selectedStatuses.includes(user.status);
 
     const isTeam =
-      (profile?.role === "operational_administrator" && (user.role === profile?.role || user.role === "department_manager")) ||
-      (profile?.role === "maintenance_head" && (user.role === profile?.role || user.role === "maintenance_technician")) ||
+      (profile?.role === "operational_administrator" &&
+        (user.role === profile?.role || user.role === "department_manager")) ||
+      (profile?.role === "maintenance_head" &&
+        (user.role === profile?.role ||
+          user.role === "maintenance_technician")) ||
       profile?.role === "system_administrator";
 
     return matchesSearch && matchesRole && matchesStatus && isTeam;
@@ -221,34 +224,38 @@ const UserManagement = () => {
             )}
           </button>
 
-          <button
-            onClick={() => setIsAddingUser(true)}
-            className="hidden sm:flex order-4 rounded-md bg-gray-800 px-3 py-1 text-white hover:bg-gray-900 items-center gap-1"
-          >
-            <FiPlus /> Add User
-          </button>
+          {profile.role === "system_administrator" && (
+            <>
+              <button
+                onClick={() => setIsAddingUser(true)}
+                className="hidden sm:flex order-4 rounded-md bg-gray-800 px-3 py-1 text-white hover:bg-gray-900 items-center gap-1"
+              >
+                <FiPlus /> Add User
+              </button>
 
-          {/* Floating button for mobile */}
-          <button
-            onClick={() => setIsAddingUser(true)}
-            className="fixed bottom-5 right-5 z-50 inline-flex items-center justify-center rounded-full bg-blue-600 p-4 text-white shadow-lg hover:bg-blue-700 sm:hidden"
-            aria-label="Add User"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-          </button>
+              {/* Floating button for mobile */}
+              <button
+                onClick={() => setIsAddingUser(true)}
+                className="fixed bottom-5 right-5 z-50 inline-flex items-center justify-center rounded-full bg-blue-600 p-4 text-white shadow-lg hover:bg-blue-700 sm:hidden"
+                aria-label="Add User"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+              </button>
+            </>
+          )}
         </div>
 
         <table className="w-full border-collapse text-white mt-5">

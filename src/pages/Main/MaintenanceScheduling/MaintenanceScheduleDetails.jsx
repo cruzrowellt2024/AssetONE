@@ -69,6 +69,7 @@ const MaintenanceScheduleDetails = ({ scheduleDetails, onClose }) => {
   const { profile } = useAuth();
   const isViewer =
     profile?.role === "maintenance_technician" || profile?.role === "reporter";
+
   const isSysAdminOrMaintenanceHead =
     profile?.role === "maintenance_head" ||
     profile?.role === "system_administrator";
@@ -164,8 +165,9 @@ const MaintenanceScheduleDetails = ({ scheduleDetails, onClose }) => {
   };
 
   const getUnitsDepartment = (unitId) => {
-    const user = units.find((unit) => unit.id === unitId);
-    return user ? `${user.department}` : "Unknown Unit";
+    const unit = units.find((unit) => unit.id === unitId);
+    console.log(unit);
+    return unit ? `${unit.department}` : "Unknown Unit";
   };
 
   const handleUpdateSchedule = async () => {
@@ -837,7 +839,7 @@ const MaintenanceScheduleDetails = ({ scheduleDetails, onClose }) => {
             <div className="p-6">
               <div className="grid grid-cols-1 gap-4">
                 <h3 className="font-medium text-gray-800 mb-2">
-                  Assign Technician:
+                  Assigned Technician:
                 </h3>
                 {isSysAdminOrMaintenanceHead && (
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
@@ -870,13 +872,15 @@ const MaintenanceScheduleDetails = ({ scheduleDetails, onClose }) => {
                         key={tech.id}
                       >
                         <span>{getUserFullName(tech.id)}</span>
-                        <button
-                          type="button"
-                          className="text-red-600 hover:underline text-xs"
-                          onClick={() => handleRemoveTechnician(tech.id)}
-                        >
-                          Remove
-                        </button>
+                        {isSysAdminOrMaintenanceHead && (
+                          <button
+                            type="button"
+                            className="text-red-600 hover:underline text-xs"
+                            onClick={() => handleRemoveTechnician(tech.id)}
+                          >
+                            Remove
+                          </button>
+                        )}
                       </li>
                     ))}
                   </ul>

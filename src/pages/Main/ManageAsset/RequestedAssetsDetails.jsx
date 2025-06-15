@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FiCheckSquare, FiX } from "react-icons/fi";
+import { FiCheckSquare, FiPackage, FiX } from "react-icons/fi";
 import { FiArrowLeft } from "react-icons/fi";
 import { fetchAssetById } from "../../../firebase/assetservices";
 import ConfirmModal from "../../../components/Modal/ConfirmModal";
@@ -39,6 +39,7 @@ const RequestAssetsDetails = ({ requestAssetsDetails, onClose }) => {
 
   const handleApproveRequest = () => {
     if (!selectedRequest) return;
+    console.log(selectedRequest.status);
 
     setIsRequestApproved(true);
   };
@@ -78,7 +79,7 @@ const RequestAssetsDetails = ({ requestAssetsDetails, onClose }) => {
     setIsLoading(true);
 
     try {
-      updateRequestUnit(selectedRequest, "Rejected", profile?.id);
+      updateRequestUnit(selectedRequest, remarks, "Rejected", profile?.id);
       setMessage("Request was rejected!");
     } catch (error) {
       setError("Failed to delete rejected. Please try again.");
@@ -120,56 +121,21 @@ const RequestAssetsDetails = ({ requestAssetsDetails, onClose }) => {
             </h3>
           </div>
           <div className="flex items-center gap-2">
-            {!["Approved", "Rejected"].includes(selectedRequest?.status) ? (
-              isRequestApproved ? (
-                <>
-                  <button
-                    className="flex items-center gap-2 px-4 py-2 rounded bg-red-600 hover:bg-red-500 text-white transition"
-                    onClick={handleCancelApproval}
-                    title="Cancel Approval"
-                  >
-                    <FiX />
-                    <span className="hidden md:inline">Cancel</span>
-                  </button>
-                  <button
-                    className="flex items-center gap-2 px-5 py-2 rounded bg-green-600 hover:bg-green-500 text-white transition"
-                    onClick={handleConfirmRequest}
-                    title="Confirm Approval"
-                  >
-                    <FiCheckSquare />
-                    <span className="hidden md:inline">Confirm</span>
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    className="flex items-center gap-2 px-4 py-2 rounded bg-red-600 hover:bg-red-500 text-white transition"
-                    onClick={() => setShowRejectModal(true)}
-                    title="Reject Request"
-                  >
-                    <FiX />
-                    <span className="hidden md:inline">Reject</span>
-                  </button>
-                  <button
-                    className="flex items-center gap-2 px-5 py-2 rounded bg-green-600 hover:bg-green-500 text-white transition"
-                    onClick={handleApproveRequest}
-                    title="Approve Request"
-                  >
-                    <FiCheckSquare />
-                    <span className="hidden md:inline">Approve</span>
-                  </button>
-                </>
-              )
-            ) : (
+            {["approved", "rejected", "acquired"].includes("acquired") ? (
               <div
                 className={`flex items-center gap-2 px-5 py-2 rounded bg-gray-700 font-bold ${
-                  selectedRequest.status === "Approved"
+                  selectedRequest.status.toLowerCase().trim() === "approved"
                     ? "text-green-600"
+                    : selectedRequest.status.toLowerCase().trim() === "acquired"
+                    ? "text-blue-500"
                     : "text-red-600"
                 }`}
               >
-                {selectedRequest.status === "Approved" ? (
+                {selectedRequest.status.toLowerCase().trim() === "approved" ? (
                   <FiCheckSquare />
+                ) : selectedRequest.status.toLowerCase().trim() ===
+                  "acquired" ? (
+                  <FiPackage />
                 ) : (
                   <FiX />
                 )}
@@ -177,6 +143,44 @@ const RequestAssetsDetails = ({ requestAssetsDetails, onClose }) => {
                   {selectedRequest.status}
                 </span>
               </div>
+            ) : isRequestApproved ? (
+              <>
+                <button
+                  className="flex items-center gap-2 px-4 py-2 rounded bg-red-600 hover:bg-red-500 text-white transition"
+                  onClick={handleCancelApproval}
+                  title="Cancel Approval"
+                >
+                  <FiX />
+                  <span className="hidden md:inline">Cancel</span>
+                </button>
+                <button
+                  className="flex items-center gap-2 px-5 py-2 rounded bg-green-600 hover:bg-green-500 text-white transition"
+                  onClick={handleConfirmRequest}
+                  title="Confirm Approval"
+                >
+                  <FiCheckSquare />
+                  <span className="hidden md:inline">Confirm</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className="flex items-center gap-2 px-4 py-2 rounded bg-red-600 hover:bg-red-500 text-white transition"
+                  onClick={() => setShowRejectModal(true)}
+                  title="Reject Request"
+                >
+                  <FiX />
+                  <span className="hidden md:inline">Reject</span>
+                </button>
+                <button
+                  className="flex items-center gap-2 px-5 py-2 rounded bg-green-600 hover:bg-green-500 text-white transition"
+                  onClick={handleApproveRequest}
+                  title="Approve Request"
+                >
+                  <FiCheckSquare />
+                  <span className="hidden md:inline">Approve</span>
+                </button>
+              </>
             )}
           </div>
         </div>

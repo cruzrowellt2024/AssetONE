@@ -7,6 +7,7 @@ import { useAuth } from "../../../../context/AuthContext";
 import ModalDetails from "../../../../components/Modal/ModalDetails";
 import MessageModal from "../../../../components/Modal/MessageModal";
 import ConfirmModal from "../../../../components/Modal/ConfirmModal";
+import SpinnerOverlay from "../../../../components/SpinnerOverlay";
 
 const TitleDetails = ({ titleDetails, onClose }) => {
   const [selectedTitle, setSelectedTitle] = useState(null);
@@ -64,91 +65,89 @@ const TitleDetails = ({ titleDetails, onClose }) => {
 
   if (!selectedTitle) return <p>Loading title details...</p>;
 
-  if (isLoading) {
-    return (
-      <div className="loading-overlay">
-        <div className="spinner"></div>
-      </div>
-    );
-  }
-
   return (
-    <ModalDetails
-      title="Title Details"
-      onClose={onClose}
-      onDelete={() => setShowDeleteModal(true)}
-      onSave={() => setShowUpdateModal(true)}
-    >
-      {showDeleteModal && (
-        <ConfirmModal
-          message={`Are you sure you want to delete '${selectedTitle.name}'?`}
-          onConfirm={handleDeleteTitle}
-          onCancel={() => setShowDeleteModal(false)}
-        />
+    <>
+      {isLoading ? (
+        <SpinnerOverlay />
+      ) : (
+        <ModalDetails
+          title="Title Details"
+          onClose={onClose}
+          onDelete={() => setShowDeleteModal(true)}
+          onSave={() => setShowUpdateModal(true)}
+        >
+          {showDeleteModal && (
+            <ConfirmModal
+              message={`Are you sure you want to delete '${selectedTitle.name}'?`}
+              onConfirm={handleDeleteTitle}
+              onCancel={() => setShowDeleteModal(false)}
+            />
+          )}
+
+          {showUpdateModal && (
+            <ConfirmModal
+              message={`Are you sure you want to update '${selectedTitle.name}'?`}
+              onConfirm={handleUpdateTitle}
+              onCancel={() => setShowUpdateModal(false)}
+            />
+          )}
+
+          <MessageModal
+            error={error}
+            message={message}
+            clearMessages={clearMessages}
+          />
+
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Name
+              </label>
+              <input
+                type="text"
+                value={selectedTitle.name || ""}
+                onChange={(e) =>
+                  setSelectedTitle({ ...selectedTitle, name: e.target.value })
+                }
+                className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Description
+              </label>
+              <input
+                type="text"
+                value={selectedTitle.description || ""}
+                onChange={(e) =>
+                  setSelectedTitle({
+                    ...selectedTitle,
+                    description: e.target.value,
+                  })
+                }
+                className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Score
+              </label>
+              <input
+                type="number"
+                value={selectedTitle.score || ""}
+                onChange={(e) =>
+                  setSelectedTitle({
+                    ...selectedTitle,
+                    score: Number(e.target.value),
+                  })
+                }
+                className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+        </ModalDetails>
       )}
-
-      {showUpdateModal && (
-        <ConfirmModal
-          message={`Are you sure you want to update '${selectedTitle.name}'?`}
-          onConfirm={handleUpdateTitle}
-          onCancel={() => setShowUpdateModal(false)}
-        />
-      )}
-
-      <MessageModal
-        error={error}
-        message={message}
-        clearMessages={clearMessages}
-      />
-
-      <div className="grid grid-cols-1 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Name
-          </label>
-          <input
-            type="text"
-            value={selectedTitle.name || ""}
-            onChange={(e) =>
-              setSelectedTitle({ ...selectedTitle, name: e.target.value })
-            }
-            className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Description
-          </label>
-          <input
-            type="text"
-            value={selectedTitle.description || ""}
-            onChange={(e) =>
-              setSelectedTitle({
-                ...selectedTitle,
-                description: e.target.value,
-              })
-            }
-            className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Score
-          </label>
-          <input
-            type="number"
-            value={selectedTitle.score || ""}
-            onChange={(e) =>
-              setSelectedTitle({
-                ...selectedTitle,
-                score: Number(e.target.value),
-              })
-            }
-            className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-      </div>
-    </ModalDetails>
+    </>
   );
 };
 

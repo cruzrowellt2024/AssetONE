@@ -84,7 +84,7 @@ const deleteVendor = async (vendorId) => {
 
 const fetchVendorsWithAssetCount = async () => {
     const vendorSnap = await getDocs(collection(db, 'vendors'));
-    const assetSnap = await getDocs(collection(db, 'assets'));
+    const assetSnap = await getDocs(collection(db, 'units'));
 
     const assetList = assetSnap.docs.map(doc => doc.data());
     const vendorList = vendorSnap.docs.map(doc => {

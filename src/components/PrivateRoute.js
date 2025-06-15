@@ -17,7 +17,7 @@ const PrivateRoute = () => {
   }
 
   if (location.pathname === "/") {
-    if (profile?.role === "reporter") return <Navigate to="/requests" replace />;
+    if (["reporter", "maintenance_technician"].includes(profile.role)) return <Navigate to="/requests" replace />;
     else return <Navigate to="/dashboard" replace />;
   }
 

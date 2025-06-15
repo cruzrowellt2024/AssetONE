@@ -19,6 +19,9 @@ const AddAssetUnit = ({ assetDetails, onClose }) => {
     department: "",
     location: "",
     vendor: "",
+    usefulLife: "",
+    depreciationMethod: "",
+    depreciationRate: "",
     isLegacy: true,
   });
 
@@ -28,6 +31,9 @@ const AddAssetUnit = ({ assetDetails, onClose }) => {
   const [specKey, setSpecKey] = useState("");
   const [specValue, setSpecValue] = useState("");
   const [editingIndex, setEditingIndex] = useState(null);
+  const [usefulLife, setUsefulLife] = useState(0);
+  const [depreciationMethod, setDepreciationMethod] = useState("");
+  const [depreciationRate, setDepreciationRate] = useState("");
   const [currentStep, setCurrentStep] = useState(1);
   const { profile } = useAuth();
   const [error, setError] = useState("");
@@ -35,15 +41,15 @@ const AddAssetUnit = ({ assetDetails, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-  if (assetDetails) {
-    setUnit((prev) => ({
-      ...prev,
-      asset: assetDetails.id,
-      isLegacy: profile?.role === "system_administrator"
-    }));
-  }
-}, [assetDetails]);
-  
+    if (assetDetails) {
+      setUnit((prev) => ({
+        ...prev,
+        asset: assetDetails.id,
+        isLegacy: profile?.role === "system_administrator",
+      }));
+    }
+  }, [assetDetails]);
+
   useEffect(() => {
     loadDropdownData(fetchDepartments, setDepartments);
     loadDropdownData(fetchLocations, setLocations);
@@ -97,6 +103,10 @@ const AddAssetUnit = ({ assetDetails, onClose }) => {
   };
 
   const handleAddUnit = async () => {
+    if (!unit.asset) {
+      setError("Asset ID is missing. Cannot proceed.");
+      return;
+    }
     const hasEmptyField = [
       unit.dateAcquired,
       unit.cost,
@@ -104,7 +114,6 @@ const AddAssetUnit = ({ assetDetails, onClose }) => {
       unit.location,
       unit.vendor,
       unit.status,
-      unit.condition,
     ].some((field) => !field.trim());
 
     const isCostValid = unit.cost !== "" && !isNaN(Number(unit.cost));
@@ -140,6 +149,9 @@ const AddAssetUnit = ({ assetDetails, onClose }) => {
         department: "",
         location: "",
         vendor: "",
+        usefulLife: "",
+        depreciationMethod: "",
+        depreciationRate: 0,
       });
       setSpecKey("");
       setSpecValue("");
@@ -234,7 +246,7 @@ const AddAssetUnit = ({ assetDetails, onClose }) => {
                   >
                     <option value="">Select {label}</option>
                     {label !== "Vendor" && (
-                      <option value="on_stock">No {label} - On Stock</option>
+                      <option value="in_stock">No {label} - On Stock</option>
                     )}
                     {Object.entries(options).map(([id, name]) => (
                       <option key={id} value={id}>
@@ -252,13 +264,11 @@ const AddAssetUnit = ({ assetDetails, onClose }) => {
                 <select
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   value={unit.status}
-                  onChange={(e) =>
-                    setUnit({ ...unit, status: e.target.value })
-                  }
+                  onChange={(e) => setUnit({ ...unit, status: e.target.value })}
                 >
                   <option value="">Select Status</option>
                   {[
-                    "On Stock",
+                    "In Stock",
                     "In Use",
                     "Under Investigation",
                     "In Repair",
@@ -272,28 +282,58 @@ const AddAssetUnit = ({ assetDetails, onClose }) => {
                   ))}
                 </select>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Condition
+                  Useful Life
+                </label>
+                <input
+                  type="number"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  value={usefulLife}
+                  onChange={(e) => {
+                    setUsefulLife(e.target.value);
+                    setUnit({ ...unit, usefulLife: e.target.value });
+                  }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Depreciation Method
                 </label>
                 <select
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  value={unit.condition}
-                  onChange={(e) =>
-                    setUnit({ ...unit, condition: e.target.value })
-                  }
+                  value={depreciationMethod}
+                  onChange={(e) => {
+                    setDepreciationMethod(e.target.value);
+                    setUnit({ ...unit, depreciationMethod: e.target.value });
+                  }}
                 >
-                  <option value="">Select Condition</option>
-                  {["Excellent", "Good", "Fair", "Poor", "Unserviceable"].map(
-                    (c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    )
-                  )}
+                  <option value="">Select Method</option>
+                  <option value="straight_line">Straight Line</option>
+                  <option value="declining_balance">Declining Balance</option>
                 </select>
               </div>
+              {depreciationMethod === "declining_balance" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Depreciation Rate (%)
+                  </label>
+                  <input
+                    type="number"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={depreciationRate}
+                    onChange={(e) => {
+                      const input = e.target.value;
+                      setDepreciationRate(input);
+                      setUnit({
+                        ...unit,
+                        depreciationRate: (input / 100).toString(),
+                      });
+                    }}
+                    placeholder="e.g., 20"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="mt-6 flex justify-end">

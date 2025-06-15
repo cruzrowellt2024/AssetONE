@@ -11,9 +11,11 @@ import {
 import { auth } from "../../../firebase/firebase";
 import MessageModal from "../../../components/Modal/MessageModal";
 import SpinnerOverlay from "../../../components/SpinnerOverlay";
+import { fetchDepartments } from "../../../firebase/departmentservices";
 
 const AccountSettings = () => {
   const { profile, loading: authLoading } = useAuth();
+  const [departments, setDepartments] = useState([]);
   const [editingField, setEditingField] = useState(null);
   const [editableProfile, setEditableProfile] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -27,6 +29,7 @@ const AccountSettings = () => {
   useEffect(() => {
     if (profile) {
       setEditableProfile({ ...profile });
+      getDepartments();
     }
   }, [profile]);
 
@@ -93,6 +96,23 @@ const AccountSettings = () => {
     setMessage("");
   };
 
+  const getDepartments = async () => {
+    try {
+      const departmentData = await fetchDepartments();
+      setDepartments(departmentData || []);
+    } catch (error) {
+      console.error("Error fetching asset:", error);
+      setDepartments([]);
+    }
+  };
+
+  const getUserDepartment = (departmentId) => {
+    const department = departments.find(
+      (department) => department.id === departmentId
+    );
+    return department ? `${department.name}` : "Unknown Department";
+  };
+
   const renderEditableField = (label, fieldKey, value) => {
     return (
       <div className="element-group flex flex-col gap-1 mb-4">
@@ -146,7 +166,9 @@ const AccountSettings = () => {
         </div>
       </div>
 
-      {authLoading || !editableProfile || isLoading && <SpinnerOverlay logo="A" />}
+      {authLoading ||
+        !editableProfile ||
+        (isLoading && <SpinnerOverlay logo="A" />)}
 
       <MessageModal
         error={error}
@@ -161,26 +183,31 @@ const AccountSettings = () => {
             </div>
             <div className="flex-1">
               <div className="font-semibold text-lg text-gray-800">
-                {editableProfile.firstName || ""} {editableProfile.lastName || ""}
+                {editableProfile.firstName || ""}{" "}
+                {editableProfile.lastName || ""}
               </div>
               <div className="text-sm text-gray-500">
                 {editableProfile.role
                   ? editableProfile.role
                       .split("_")
-                      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                      .map(
+                        (word) => word.charAt(0).toUpperCase() + word.slice(1)
+                      )
                       .join(" ")
                   : ""}{" "}
-                - {editableProfile.department || ""}
+                - {getUserDepartment(editableProfile.department) || ""}
               </div>
             </div>
             <div className="text-right">
               <div className="text-xs text-gray-400">Joined Date:</div>
               <div className="text-sm text-gray-600 font-medium">
-                {editableProfile.dateCreated?.toDate().toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                }) || ""}
+                {editableProfile.dateCreated
+                  ?.toDate()
+                  .toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  }) || ""}
               </div>
             </div>
           </div>

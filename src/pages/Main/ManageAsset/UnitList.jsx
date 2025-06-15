@@ -38,6 +38,39 @@ const UnitList = ({ assetDetails }) => {
     Disposed: false,
   });
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Pending":
+        return "bg-yellow-500 text-white"; // Warning vibe
+      case "Ongoing":
+        return "bg-sky-600 text-white"; // Neutral-progress
+      case "Cancelled":
+        return "bg-rose-600 text-white"; // Strong negative
+      case "Acquired":
+        return "bg-emerald-600 text-white";
+      case "Delivered":
+        return "bg-emerald-600 text-white";
+      case "In Progress":
+        return "bg-purple-600 text-white";
+      case "Active":
+        return "bg-indigo-600 text-white"; // For filter usage
+      case "In Use":
+        return "bg-blue-700 text-white";
+      case "Under Investigation":
+        return "bg-orange-600 text-white";
+      case "In Repair":
+        return "bg-purple-600 text-white";
+      case "Borrowed":
+        return "bg-cyan-700 text-white";
+      case "Broken":
+        return "bg-red-700 text-white";
+      case "Disposed":
+        return "bg-gray-800 text-white";
+      default:
+        return "bg-gray-500 text-white";
+    }
+  };
+
   const { profile } = useAuth();
 
   useEffect(() => {
@@ -198,6 +231,7 @@ const UnitList = ({ assetDetails }) => {
     const isInDepartment =
       unit.department?.includes(profile?.department) ||
       profile?.role === "system_administrator" ||
+      profile?.role === "maintenance_head" ||
       profile?.role === "operational_administrator";
 
     return (
@@ -242,7 +276,8 @@ const UnitList = ({ assetDetails }) => {
       request.department?.includes(profile?.department) ||
       profile?.role === "system_administrator" ||
       "operational_administrator" ||
-      "finance";
+      "finance" ||
+      "maintenance_head";
 
     const isReportedBy =
       request.requestedBy?.includes(profile?.id) ||
@@ -338,16 +373,18 @@ const UnitList = ({ assetDetails }) => {
                   </span>
                 )}
               </button>
-              <button
-                onClick={() => setActiveTab("requests")}
-                className={`text-xl font-semibold ${
-                  activeTab === "requests"
-                    ? "text-black border-b-2 border-blue-600"
-                    : "text-gray-500"
-                }`}
-              >
-                REQUEST LIST
-              </button>
+              {profile.role !== "maintenance_head" && (
+                <button
+                  onClick={() => setActiveTab("requests")}
+                  className={`text-xl font-semibold ${
+                    activeTab === "requests"
+                      ? "text-black border-b-2 border-blue-600"
+                      : "text-gray-500"
+                  }`}
+                >
+                  REQUEST LIST
+                </button>
+              )}
             </div>
           </div>
 
@@ -440,7 +477,7 @@ const UnitList = ({ assetDetails }) => {
                   </button>
                   {showDropdown && (
                     <div className="absolute bottom-16 right-0 bg-white border rounded shadow-2xl w-40">
-                      {profile?.role === "system_administrator" && (
+                      {profile?.role === "operational_administrator" && (
                         <button
                           onClick={() => {
                             setIsAddingUnit(true);
@@ -554,13 +591,14 @@ const UnitList = ({ assetDetails }) => {
                     <td
                       className={`w-[25%] border-b border-gray-300 py-2 truncate`}
                     >
+                      <div className="flex items-center gap-2">
                       <span
-                        className={`status-indicator status-${
-                          unit.status?.toLowerCase().replace(/\s+/g, "-") ||
-                          "unknown"
-                        }`}
+                        className={`w-3 h-3 rounded-full ${getStatusColor(
+                          unit.status
+                        )}`}
                       ></span>
-                      {unit.status}
+                      <span>{unit.status || "N/A"}</span>
+                    </div>
                     </td>
                     <td
                       className={`hidden sm:table-cell w-[25%] border-b border-gray-300 py-2 truncate`}
@@ -600,13 +638,14 @@ const UnitList = ({ assetDetails }) => {
                     <td
                       className={`w-[25%] border-b border-gray-300 py-2 truncate`}
                     >
+                      <div className="flex items-center gap-2">
                       <span
-                        className={`status-indicator status-${
-                          request.status?.toLowerCase().replace(/\s+/g, "-") ||
-                          "unknown"
-                        }`}
+                        className={`w-3 h-3 rounded-full ${getStatusColor(
+                          request.status
+                        )}`}
                       ></span>
-                      {request.status}
+                      <span>{request.status || "N/A"}</span>
+                    </div>
                     </td>
                     <td
                       className={`w-[25%] border-b border-gray-300 py-2 truncate`}
@@ -636,73 +675,72 @@ const UnitList = ({ assetDetails }) => {
           </table>
         )}
         {activeTab === "units" || totalRequestPages > 1 ? (
-        <div className="sticky bottom-0 mt-2 flex w-full items-center justify-center gap-2 rounded-b-lg bg-white py-2">
-          <button
-            className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => setCurrentPage(1)}
-            disabled={currentPage === 1}
-          >
-            {"<<"}
-          </button>
-          <button
-            className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-          >
-            {"<"}
-          </button>
-
-          {pageButtons.map((pageNum) => (
+          <div className="sticky bottom-0 mt-2 flex w-full items-center justify-center gap-2 rounded-b-lg bg-white py-2">
             <button
-              key={pageNum}
-              className={`rounded border px-3 py-1 ${
-                pageNum === currentPage
-                  ? "border-blue-600 bg-blue-600 text-white"
-                  : "border-gray-300 hover:bg-gray-200"
-              }`}
-              onClick={() => setCurrentPage(pageNum)}
+              className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
             >
-              {pageNum}
+              {"<<"}
             </button>
-          ))}
+            <button
+              className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              {"<"}
+            </button>
 
-          <button
-            className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() =>
-              setCurrentPage((p) =>
-                Math.min(
-                  activeTab === "units" ? totalUnitPages : totalRequestPages,
-                  p + 1
+            {pageButtons.map((pageNum) => (
+              <button
+                key={pageNum}
+                className={`rounded border px-3 py-1 ${
+                  pageNum === currentPage
+                    ? "border-blue-600 bg-blue-600 text-white"
+                    : "border-gray-300 hover:bg-gray-200"
+                }`}
+                onClick={() => setCurrentPage(pageNum)}
+              >
+                {pageNum}
+              </button>
+            ))}
+
+            <button
+              className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() =>
+                setCurrentPage((p) =>
+                  Math.min(
+                    activeTab === "units" ? totalUnitPages : totalRequestPages,
+                    p + 1
+                  )
                 )
-              )
-            }
-            disabled={
-              currentPage ===
-              (activeTab === "units" ? totalUnitPages : totalRequestPages)
-            }
-          >
-            {">"}
-          </button>
-          <button
-            className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() =>
-              setCurrentPage(
-                activeTab === "units" ? totalUnitPages : totalRequestPages
-              )
-            }
-            disabled={
-              currentPage ===
-              (activeTab === "units" ? totalUnitPages : totalRequestPages)
-            }
-          >
-            {">>"}
-          </button>
-        </div>
-      ) : null}
+              }
+              disabled={
+                currentPage ===
+                (activeTab === "units" ? totalUnitPages : totalRequestPages)
+              }
+            >
+              {">"}
+            </button>
+            <button
+              className="rounded border border-gray-300 px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() =>
+                setCurrentPage(
+                  activeTab === "units" ? totalUnitPages : totalRequestPages
+                )
+              }
+              disabled={
+                currentPage ===
+                (activeTab === "units" ? totalUnitPages : totalRequestPages)
+              }
+            >
+              {">>"}
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {/* Pagination */}
-      
 
       {isAddingUnit && (
         <AddAssetUnit

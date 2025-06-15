@@ -38,6 +38,38 @@ const MaintenanceScheduling = () => {
     return "Critical";
   };
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Pending":
+        return "bg-yellow-600";
+      case "Ongoing":
+        return "bg-blue-600";
+      case "Cancelled":
+        return "bg-red-600";
+      case "Completed":
+        return "bg-green-600";
+      default:
+        return "bg-gray-600";
+    }
+  };
+
+  const getPriorityColor = (priorityLabel) => {
+    switch (priorityLabel?.toLowerCase()) {
+      case "very low":
+        return "bg-gray-400";
+      case "low":
+        return "bg-blue-500";
+      case "medium":
+        return "bg-yellow-500";
+      case "high":
+        return "bg-orange-500";
+      case "critical":
+        return "bg-red-600";
+      default:
+        return "bg-gray-400";
+    }
+  };
+
   const getSchedulesRealtime = () => {
     const unsubscribe = onSnapshot(
       collection(db, "schedules"),
@@ -125,10 +157,12 @@ const MaintenanceScheduling = () => {
         profile.role === "maintenance_head" ||
         profile.role === "system_administrator");
 
-        console.log(matchesSearch &&
-      matchesMaintenanceType &&
-      matchesStatus &&
-      isAssignedToUser);
+    console.log(
+      matchesSearch &&
+        matchesMaintenanceType &&
+        matchesStatus &&
+        isAssignedToUser
+    );
     return (
       matchesSearch &&
       matchesMaintenanceType &&
@@ -274,25 +308,26 @@ const MaintenanceScheduling = () => {
                   <td
                     className={`w-[20%] border-b border-gray-300 py-2 truncate`}
                   >
-                    <span
-                      className={`status-indicator status-${
-                        schedule.status?.toLowerCase().replace(/\s+/g, "-") ||
-                        "unknown"
-                      }`}
-                    ></span>
-                    {schedule.status}
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-3 h-3 rounded-full ${getStatusColor(
+                          schedule.status
+                        )}`}
+                      ></span>
+                      <span>{schedule.status || "N/A"}</span>
+                    </div>
                   </td>
                   <td
                     className={`hidden sm:table-cell w-[20%] border-b border-gray-300 py-2 truncate`}
                   >
-                    <span
-                      className={`status-indicator priority-${
-                        getPriorityLabel(schedule.priorityScore)
-                          ?.toLowerCase()
-                          .replace(/\s+/g, "-") || "unknown"
-                      }`}
-                    ></span>
-                    {getPriorityLabel(schedule.priorityScore)}
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-3 h-3 rounded-full ${getPriorityColor(
+                          getPriorityLabel(schedule.priorityScore)
+                        )}`}
+                      ></span>
+                      <span>{getPriorityLabel(schedule.priorityScore)}</span>
+                    </div>
                   </td>
                   <td
                     className={`hidden sm:table-cell w-[20%] border-b border-gray-300 py-2 truncate`}

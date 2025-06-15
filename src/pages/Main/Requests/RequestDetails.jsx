@@ -46,9 +46,7 @@ const RequestDetails = ({ requestDetails, onClose }) => {
     dateCompleted: "",
   });
 
-  const isMaintenanceTeam =
-    profile?.role === "maintenance_head" ||
-    profile?.role === "system_administrator";
+  const isMaintenanceTeam = profile?.role === "maintenance_head";
 
   useEffect(() => {
     if (requestDetails) {

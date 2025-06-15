@@ -81,7 +81,7 @@ const deleteLocation = async (locationId, logby) => {
 
 const fetchLocationsWithAssetCount = async () => {
     const locationSnap = await getDocs(collection(db, 'locations'));
-    const assetSnap = await getDocs(collection(db, 'assets'));
+    const assetSnap = await getDocs(collection(db, 'units'));
 
     const assetList = assetSnap.docs.map(doc => doc.data());
     const locationList = locationSnap.docs.map(doc => {

@@ -80,7 +80,7 @@ const deleteDepartment = async (departmentId, logby) => {
 
 const fetchDepartmentsWithAssetCount = async () => {
     const departmentSnap = await getDocs(collection(db, 'departments'));
-    const assetSnap = await getDocs(collection(db, 'assets'));
+    const assetSnap = await getDocs(collection(db, 'units'));
 
     const assetList = assetSnap.docs.map(doc => doc.data());
     const departmentList = departmentSnap.docs.map(doc => {

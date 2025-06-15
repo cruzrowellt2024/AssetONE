@@ -28,13 +28,12 @@ const generatePositionID = async () => {
     }
 };
 
-const addPosition = async (name, description, score, logby) => {
+const addPosition = async (name, score, logby) => {
     try {
         const newPositionId = await generatePositionID();
 
         await setDoc(doc(db, "positions", newPositionId), {
             name,
-            description,
             score,
             dateCreated: serverTimestamp(),
             dateUpdated: serverTimestamp(),
@@ -53,7 +52,6 @@ const updatePosition = async (selectedPosition, logby) => {
     try {
         await setDoc(doc(db, "positions", selectedPosition.id), {
             name: selectedPosition.name,
-            description: selectedPosition.description,
             score: selectedPosition.score,
             dateUpdated: serverTimestamp(),
         }, { merge: true });

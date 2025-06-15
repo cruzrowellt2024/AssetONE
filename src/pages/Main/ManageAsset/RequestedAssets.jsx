@@ -31,7 +31,40 @@ const RequestedAssets = () => {
     if (score <= 24) return "Low";
     if (score <= 49) return "Medium";
     if (score <= 74) return "High";
-    return "Critical";
+    if (score <= 100) return "Critical";
+    return "Very Low";
+  };
+
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case "pending":
+        return "bg-yellow-500";
+      case "acquired":
+        return "bg-blue-500";
+      case "approved":
+        return "bg-green-700";
+      case "rejected":
+        return "bg-red-500";
+      default:
+        return "bg-gray-400";
+    }
+  };
+
+  const getPriorityColor = (priorityLabel) => {
+    switch (priorityLabel?.toLowerCase()) {
+      case "very low":
+        return "bg-gray-400";
+      case "low":
+        return "bg-blue-500";
+      case "medium":
+        return "bg-yellow-500";
+      case "high":
+        return "bg-orange-500";
+      case "critical":
+        return "bg-red-600";
+      default:
+        return "bg-gray-400";
+    }
   };
 
   const getData = async () => {
@@ -61,9 +94,7 @@ const RequestedAssets = () => {
   }, []);
 
   const getRequestRealtime = () => {
-    const q = query(
-      collection(db, "unit_requests") 
-    );
+    const q = query(collection(db, "unit_requests"));
     return onSnapshot(
       q,
       (snapshot) => {
@@ -128,9 +159,9 @@ const RequestedAssets = () => {
       selectedStatuses.length === 0 ||
       selectedStatuses.includes(request.status);
 
-      const isRequestedByOperationalAdmin =
-      getUserRole(request.requestedBy) === "operational_administrator"
-      
+    const isRequestedByOperationalAdmin =
+      getUserRole(request.requestedBy) === "operational_administrator";
+
     return matchesSearch && matchesStatus && isRequestedByOperationalAdmin;
   });
 
@@ -242,25 +273,26 @@ const RequestedAssets = () => {
                   <td
                     className={`w-[17.5%] border-b border-gray-300 py-2 truncate`}
                   >
-                    <span
-                      className={`status-indicator status-${
-                        request.status?.toLowerCase().replace(/\s+/g, "-") ||
-                        "unknown"
-                      }`}
-                    ></span>
-                    {request.status || "N/A"}
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-3 h-3 rounded-full ${getStatusColor(
+                          request.status
+                        )}`}
+                      ></span>
+                      <span>{request.status || "N/A"}</span>
+                    </div>
                   </td>
                   <td
                     className={`hidden sm:table-cell w-[17.5%] border-b border-gray-300 py-2 truncate`}
                   >
-                    <span
-                      className={`status-indicator priority-${
-                        getPriorityLabel(request.priorityScore)
-                          ?.toLowerCase()
-                          .replace(/\s+/g, "-") || "unknown"
-                      }`}
-                    ></span>
-                    {getPriorityLabel(request.priorityScore)}
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-3 h-3 rounded-full ${getPriorityColor(
+                          getPriorityLabel(request.priorityScore)
+                        )}`}
+                      ></span>
+                      <span>{getPriorityLabel(request.priorityScore)}</span>
+                    </div>
                   </td>
                   <td
                     className={`hidden sm:table-cell w-[20%] border-b border-gray-300 py-2 truncate`}

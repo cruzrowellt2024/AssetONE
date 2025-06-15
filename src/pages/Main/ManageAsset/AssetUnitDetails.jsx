@@ -257,22 +257,30 @@ const AssetDetails = ({ unitDetails, onClose }) => {
               <FiCamera />
               <span className="hidden lg:inline">Scan QR Code</span>
             </button>
-            <button
-              className="text-gray-200 hover:text-gray-300 px-4 py-3 lg:py-2 rounded bg-red-600 hover:bg-red-500 transition flex items-center gap-2"
-              onClick={() => setShowDeleteModal(true)}
-              title="Delete Asset"
-            >
-              <FiTrash />
-              <span className="hidden lg:inline">Delete</span>
-            </button>
-            <button
-              className="bg-green-600 text-white px-5 py-3 lg:py-2 rounded hover:bg-green-500 transition flex items-center gap-2"
-              onClick={() => setShowUpdateModal(true)}
-              title="Save Changes"
-            >
-              <FiCheckSquare />
-              <span className="hidden lg:inline">Save</span>
-            </button>
+            {["operational_administrator", "department_manager"].includes(
+              profile.role
+            ) && (
+              <>
+                {profile.role === "operational_administrator" && (
+                  <button
+                    className="text-gray-200 hover:text-gray-300 px-4 py-3 lg:py-2 rounded bg-red-600 hover:bg-red-500 transition flex items-center gap-2"
+                    onClick={() => setShowDeleteModal(true)}
+                    title="Delete Asset"
+                  >
+                    <FiTrash />
+                    <span className="hidden lg:inline">Delete</span>
+                  </button>
+                )}
+                <button
+                  className="bg-green-600 text-white px-5 py-3 lg:py-2 rounded hover:bg-green-500 transition flex items-center gap-2"
+                  onClick={() => setShowUpdateModal(true)}
+                  title="Save Changes"
+                >
+                  <FiCheckSquare />
+                  <span className="hidden lg:inline">Save</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -365,8 +373,7 @@ const AssetDetails = ({ unitDetails, onClose }) => {
                     value={selectedUnit.condition || ""}
                     className="mt-1 block w-full rounded-md border border-gray-100 px-3 py-2 text-sm shadow-sm"
                     disabled
-                  >
-                  </input>
+                  ></input>
                 </div>
 
                 <div>
@@ -450,28 +457,30 @@ const AssetDetails = ({ unitDetails, onClose }) => {
                   <h3 className="font-medium text-gray-800 mb-2">
                     Specifications
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
-                    <input
-                      type="text"
-                      placeholder="Spec Name"
-                      className="col-span-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
-                      value={specKey}
-                      onChange={(e) => setSpecKey(e.target.value)}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Spec Value"
-                      className="col-span-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
-                      value={specValue}
-                      onChange={(e) => setSpecValue(e.target.value)}
-                    />
-                    <button
-                      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500 transition"
-                      onClick={handleAddSpec}
-                    >
-                      {editingIndex !== null ? "Update Spec" : "Add Spec"}
-                    </button>
-                  </div>
+                  {profile.role === "operational_administrator" && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
+                      <input
+                        type="text"
+                        placeholder="Spec Name"
+                        className="col-span-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                        value={specKey}
+                        onChange={(e) => setSpecKey(e.target.value)}
+                      />
+                      <input
+                        type="text"
+                        placeholder="Spec Value"
+                        className="col-span-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                        value={specValue}
+                        onChange={(e) => setSpecValue(e.target.value)}
+                      />
+                      <button
+                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500 transition"
+                        onClick={handleAddSpec}
+                      >
+                        {editingIndex !== null ? "Update Spec" : "Add Spec"}
+                      </button>
+                    </div>
+                  )}
                   {assetSpecs.length > 0 && (
                     <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
                       {assetSpecs.map((spec, index) => (

@@ -124,12 +124,12 @@ const updateUserStatus = async ( status, logby) => {
     }
 };
 
-const deleteUser = async (userId, logby) => {
-    if (!userId) throw new Error("User ID is required");
+const deleteUser = async (user, logby) => {
+    if (!user?.id) throw new Error("User ID is required");
 
     try {
-        await deleteDoc(doc(db, "users", userId));
-        await addActivityLog(logby, "Delete User", `User ID: ${userId}`);
+        await deleteDoc(doc(db, "users", user.id));
+        await addActivityLog(logby, "Delete User", `User ID: ${user.id}`);
     } catch (error) {
         console.error("Error deleting user:", error);
         throw error;

@@ -18,6 +18,7 @@ import {
   FiUsers,
   FiSettings,
   FiFileText,
+  FiClock,
 } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 
@@ -150,7 +151,7 @@ const Sidebar = ({
               >
                 <FiUser className="text-lg ml-3" />
                 {(!isCollapsed || (isMobile && mobileOpen)) && (
-                  <span className="ml-3">User Management</span>
+                  <span className="ml-3">{profile?.role === "operational_administrator" ? "Asset Team" : "Maintenance Team"}</span>
                 )}
               </Link>
             </li>
@@ -247,9 +248,30 @@ const Sidebar = ({
             </li>
           )}
 
+          {/* Depreciation */}
+          {shouldShowItem([
+            "finance",
+          ]) && (
+            <li
+              className={`flex items-center h-12 px-4 py-3 hover:bg-gray-700 ${
+                isActive("depreciation-calculation") ? "bg-gray-800" : ""
+              }`}
+            >
+              <Link
+                to="depreciation-calculation"
+                className="flex items-center w-full"
+                onClick={() => handleLinkClick("Asset Depreciation")}
+              >
+                <FiClock className="text-lg ml-3" />
+                {(!isCollapsed || (isMobile && mobileOpen)) && (
+                  <span className="ml-3">Asset Depreciation</span>
+                )}
+              </Link>
+            </li>
+          )}
+
           {/* Maintenance Schedule */}
           {shouldShowItem([
-            "system_administrator",
             "maintenance_head",
             "maintenance_technician",
           ]) && (

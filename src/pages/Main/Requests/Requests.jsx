@@ -36,6 +36,38 @@ const Requests = () => {
     Critical: false,
   });
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Pending":
+        return "bg-yellow-600";
+      case "Ongoing":
+        return "bg-blue-600";
+      case "Cancelled":
+        return "bg-red-600";
+      case "Completed":
+        return "bg-green-600";
+      default:
+        return "bg-gray-600";
+    }
+  };
+
+  const getPriorityColor = (priorityLabel) => {
+    switch (priorityLabel?.toLowerCase()) {
+      case "very low":
+        return "bg-gray-400";
+      case "low":
+        return "bg-blue-500";
+      case "medium":
+        return "bg-yellow-500";
+      case "high":
+        return "bg-orange-500";
+      case "critical":
+        return "bg-red-600";
+      default:
+        return "bg-gray-400";
+    }
+  };
+
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 30;
 
@@ -133,7 +165,8 @@ const Requests = () => {
       selectedStatuses.includes(request.status);
 
     const isReportedBy =
-      request.reportedBy?.includes(profile?.id) || profile?.role === "maintenance_head";
+      request.reportedBy?.includes(profile?.id) ||
+      profile?.role === "maintenance_head";
 
     return matchesSearch && matchesStatus && isReportedBy;
   });
@@ -313,7 +346,9 @@ const Requests = () => {
                 Description
               </th>
               <th className="w-[17.5%] text-start">Status</th>
-              <th className="hidden sm:table-cell w-[17.5%] text-start">Priority Level</th>
+              <th className="hidden sm:table-cell w-[17.5%] text-start">
+                Priority Level
+              </th>
               <th className="hidden sm:table-cell w-[20%] text-start">
                 Reported By
               </th>
@@ -345,25 +380,26 @@ const Requests = () => {
                   <td
                     className={`w-[17.5%] border-b border-gray-300 py-2 truncate`}
                   >
-                    <span
-                      className={`status-indicator status-${
-                        request.status?.toLowerCase().replace(/\s+/g, "-") ||
-                        "unknown"
-                      }`}
-                    ></span>
-                    {request.status || "N/A"}
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-3 h-3 rounded-full ${getStatusColor(
+                          request.status
+                        )}`}
+                      ></span>
+                      <span>{request.status || "N/A"}</span>
+                    </div>
                   </td>
                   <td
                     className={`hidden sm:table-cell w-[17.5%] border-b border-gray-300 py-2 truncate`}
                   >
-                    <span
-                      className={`status-indicator priority-${
-                        getPriorityLabel(request.priorityScore)
-                          ?.toLowerCase()
-                          .replace(/\s+/g, "-") || "unknown"
-                      }`}
-                    ></span>
-                    {getPriorityLabel(request.priorityScore)}
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-3 h-3 rounded-full ${getPriorityColor(
+                          getPriorityLabel(request.priorityScore)
+                        )}`}
+                      ></span>
+                      <span>{getPriorityLabel(request.priorityScore)}</span>
+                    </div>
                   </td>
                   <td
                     className={`hidden sm:table-cell w-[20%] border-b border-gray-300 py-2 truncate`}
@@ -538,7 +574,10 @@ const Requests = () => {
           >
             <div className="bg-gray-600 text-white flex items-center justify-between p-4 rounded-t-lg">
               <div className="flex items-center gap-3">
-                <FiArrowLeft className="cursor-pointer" onClick={() => setShowScanner(false)} />
+                <FiArrowLeft
+                  className="cursor-pointer"
+                  onClick={() => setShowScanner(false)}
+                />
                 <h3 className="text-lg font-semibold">Scan QR Code</h3>
               </div>
             </div>

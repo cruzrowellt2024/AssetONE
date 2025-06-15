@@ -102,7 +102,7 @@ const AssetDetails = ({ assetDetails, onClose }) => {
           <h3 className="text-lg font-semibold">Asset Details</h3>
         </div>
         <div className="actions flex items-center gap-2">
-          {profile?.role === "system_administrator" && (
+          {profile?.role === "operational_administrator" && (
             <>
               <button
                 className="delete-btn text-gray-200 hover:text-gray-900 px-4 py-2 rounded bg-red-600 hover:bg-red-700 transition flex items-center gap-2"
@@ -162,6 +162,7 @@ const AssetDetails = ({ assetDetails, onClose }) => {
                 setSelectedAsset({ ...selectedAsset, name: e.target.value })
               }
               className="input-field border border-gray-300 rounded px-3 py-2 w-full"
+              disabled={profile.role !== "operational_administrator"}
             />
           </div>
           <div className="row-span-2">
@@ -177,6 +178,7 @@ const AssetDetails = ({ assetDetails, onClose }) => {
                 })
               }
               className="border border-gray-300 rounded px-3 py-2 w-full min-h-28 resize-none"
+              disabled={profile.role !== "operational_administrator"}
             />
           </div>
           <div>
@@ -192,6 +194,7 @@ const AssetDetails = ({ assetDetails, onClose }) => {
                 })
               }
               className="input-field border border-gray-300 rounded px-3 py-2 w-full"
+              disabled={profile.role !== "operational_administrator"}
             >
               <option value="">Select Category</option>
               {Object.entries(categories).map(([id, name]) => (

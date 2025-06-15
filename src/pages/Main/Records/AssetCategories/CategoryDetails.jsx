@@ -7,6 +7,7 @@ import { useAuth } from "../../../../context/AuthContext";
 import ModalDetails from "../../../../components/Modal/ModalDetails";
 import MessageModal from "../../../../components/Modal/MessageModal";
 import ConfirmModal from "../../../../components/Modal/ConfirmModal";
+import SpinnerOverlay from "../../../../components/SpinnerOverlay";
 
 const CategoryDetails = ({ categoryDetails, onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -37,7 +38,6 @@ const CategoryDetails = ({ categoryDetails, onClose }) => {
     }
 
     setIsLoading(false);
-    setShowUpdateModal(false);
   };
 
   const handleDeleteCategory = async () => {
@@ -51,13 +51,11 @@ const CategoryDetails = ({ categoryDetails, onClose }) => {
     try {
       await deleteCategory(selectedCategory.id, profile?.id);
       setMessage("Category was deleted successfully!");
-      onClose();
     } catch (error) {
       setError("Failed to delete category. Please try again.");
     }
 
     setIsLoading(false);
-    setShowDeleteModal(false);
   };
 
   if (!selectedCategory) {
@@ -70,87 +68,76 @@ const CategoryDetails = ({ categoryDetails, onClose }) => {
     onClose();
   };
 
-  if (isLoading) {
-    return (
-      <div className="loading-overlay">
-        <div className="spinner"></div>
-      </div>
-    );
-  }
-
   return (
-    <ModalDetails
-      title="Category Details"
-      onClose={onClose}
-      onDelete={() => setShowDeleteModal(true)}
-      onSave={() => setShowUpdateModal(true)}
-    >
-      {showDeleteModal && (
-        <ConfirmModal
-          message={`Are you sure you want to delete '${selectedCategory.name}'?`}
-          onConfirm={handleDeleteCategory}
-          onCancel={() => setShowDeleteModal(false)}
-        />
+    <>
+      {isLoading ? (
+        <SpinnerOverlay />
+      ) : (
+        <ModalDetails
+          title="Category Details"
+          onClose={onClose}
+          onDelete={() => setShowDeleteModal(true)}
+          onSave={() => setShowUpdateModal(true)}
+        >
+          {showDeleteModal && (
+            <ConfirmModal
+              message={`Are you sure you want to delete '${selectedCategory.name}'?`}
+              onConfirm={handleDeleteCategory}
+              onCancel={() => setShowDeleteModal(false)}
+            />
+          )}
+
+          {showUpdateModal && (
+            <ConfirmModal
+              message={`Are you sure you want to update '${selectedCategory.name}'?`}
+              onConfirm={handleUpdateCategory}
+              onCancel={() => setShowUpdateModal(false)}
+            />
+          )}
+
+          <MessageModal
+            error={error}
+            message={message}
+            clearMessages={clearMessages}
+          />
+
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Name
+              </label>
+              <input
+                type="text"
+                value={selectedCategory.name || ""}
+                className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                onChange={(e) =>
+                  setSelectedCategory({
+                    ...selectedCategory,
+                    name: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Description
+              </label>
+              <input
+                type="text"
+                value={selectedCategory.description || ""}
+                className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                onChange={(e) =>
+                  setSelectedCategory({
+                    ...selectedCategory,
+                    description: e.target.value,
+                  })
+                }
+              />
+            </div>
+          </div>
+        </ModalDetails>
       )}
-
-      {showUpdateModal && (
-        <ConfirmModal
-          message={`Are you sure you want to update '${selectedCategory.name}'?`}
-          onConfirm={handleUpdateCategory}
-          onCancel={() => setShowUpdateModal(false)}
-        />
-      )}
-
-      <MessageModal
-        error={error}
-        message={message}
-        clearMessages={clearMessages}
-      />
-
-      <div className="grid grid-cols-1 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">ID</label>
-          <input
-            type="text"
-            value={selectedCategory.id || ""}
-            className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
-            readOnly
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Name
-          </label>
-          <input
-            type="text"
-            value={selectedCategory.name || ""}
-            className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
-            onChange={(e) =>
-              setSelectedCategory({
-                ...selectedCategory,
-                name: e.target.value,
-              })
-            }
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Description
-          </label>
-          <input
-            type="text"
-            value={selectedCategory.description || ""}
-            className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
-            onChange={(e) =>
-              setSelectedCategory({
-                ...selectedCategory,
-                description: e.target.value,
-              })
-            }
-          />
-        </div>
-      </div>
-    </ModalDetails>
+    </>
   );
 };
 

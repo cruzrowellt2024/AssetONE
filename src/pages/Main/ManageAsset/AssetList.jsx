@@ -209,7 +209,7 @@ const AssetList = ({ onClose, onSelectAsset }) => {
             )}
           </button>
 
-          {profile?.role === "system_administrator" && (
+          {profile?.role === "operational_administrator" && (
             <>
               <button
                 className="hidden sm:flex order-4 rounded-md bg-gray-800 px-3 py-1 text-white hover:bg-gray-900 items-center gap-1"

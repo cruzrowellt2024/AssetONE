@@ -28,7 +28,7 @@ import MessageModal from "../../../components/Modal/MessageModal";
 import SpinnerOverlay from "../../../components/SpinnerOverlay";
 
 const reportOptions = [
-  "assets",
+  "units",
   "schedules",
   "requests",
   "locations",

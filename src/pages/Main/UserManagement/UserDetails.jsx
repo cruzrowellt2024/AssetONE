@@ -6,6 +6,8 @@ import { useAuth } from "../../../context/AuthContext";
 import ModalDetails from "../../../components/Modal/ModalDetails";
 import MessageModal from "../../../components/Modal/MessageModal";
 import ConfirmModal from "../../../components/Modal/ConfirmModal";
+import SpinnerOverlay from "../../../components/SpinnerOverlay";
+import { FiArrowLeft, FiCheckSquare, FiTrash } from "react-icons/fi";
 
 const UserDetails = ({ userDetails, onClose }) => {
   const [selectedUser, setSelectedUser] = useState(null);
@@ -17,6 +19,8 @@ const UserDetails = ({ userDetails, onClose }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const { profile } = useAuth();
+
+  const isNotSystemAdmin = profile?.role !== "system_administrator";
 
   useEffect(() => {
     if (userDetails) {
@@ -56,7 +60,6 @@ const UserDetails = ({ userDetails, onClose }) => {
     }
 
     setIsLoading(false);
-    setShowUpdateModal(false);
   };
 
   const handleDeleteUser = async () => {
@@ -68,7 +71,7 @@ const UserDetails = ({ userDetails, onClose }) => {
     setIsLoading(true);
 
     try {
-      await deleteUser(selectedUser.id, profile?.id);
+      await deleteUser(selectedUser, profile?.id);
       setMessage("User was deleted successfully!");
     } catch (error) {
       setError("Failed to delete user. Please try again.");
@@ -87,165 +90,223 @@ const UserDetails = ({ userDetails, onClose }) => {
     onClose();
   };
 
-  if (isLoading) {
-    return (
-      <div className="loading-overlay">
-        <div className="spinner"></div>
-      </div>
-    );
-  }
+  if (!selectedUser) return;
 
   return (
-    <ModalDetails
-      title="User Details"
-      onClose={onClose}
-      onDelete={() => setShowDeleteModal(true)}
-      onSave={() => setShowUpdateModal(true)}
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      onClick={onClose}
     >
-      {showDeleteModal && (
-        <ConfirmModal
-          message={`Are you sure you want to delete '${selectedUser.firstName}' '${selectedUser.lastName}'?`}
-          onConfirm={handleDeleteUser}
-          onCancel={() => setShowDeleteModal(false)}
-        />
-      )}
-
-      {showUpdateModal && (
-        <ConfirmModal
-          message={`Are you sure you want to update '${selectedUser.firstName}' '${selectedUser.lastName}'?`}
-          onConfirm={handleUpdateUser}
-          onCancel={() => setShowUpdateModal(false)}
-        />
-      )}
-
-      <MessageModal
-        error={error}
-        message={message}
-        clearMessages={clearMessages}
-      />
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            First Name
-          </label>
-          <input
-            type="text"
-            value={selectedUser.firstName || ""}
-            onChange={(e) =>
-              setSelectedUser({ ...selectedUser, firstName: e.target.value })
-            }
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Last Name
-          </label>
-          <input
-            type="text"
-            value={selectedUser.lastName || ""}
-            onChange={(e) =>
-              setSelectedUser({ ...selectedUser, lastName: e.target.value })
-            }
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Contact Number
-          </label>
-          <input
-            type="text"
-            value={selectedUser.contactNumber || ""}
-            onChange={(e) =>
-              setSelectedUser({
-                ...selectedUser,
-                contactNumber: e.target.value,
-              })
-            }
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Email
-          </label>
-          <input
-            type="text"
-            value={selectedUser.email || ""}
-            onChange={(e) =>
-              setSelectedUser({ ...selectedUser, email: e.target.value })
-            }
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Status
-          </label>
-          <select
-            value={selectedUser.status}
-            onChange={(e) =>
-              setSelectedUser({ ...selectedUser, status: e.target.value })
-            }
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="Available">Available</option>
-            <option value="In Operation">In Operation</option>
-            <option value="Unavailable">Unavailable</option>
-          </select>
-        </div>
-
-        {!["system_administrator", "operational_administrator", "reporter", "finance"].includes(
-          selectedUser.role
-        ) && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Department
-            </label>
-            <select
-              value={selectedUser?.department || ""}
-              onChange={(e) =>
-                setSelectedUser({ ...selectedUser, department: e.target.value })
-              }
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">None</option>
-              {Object.entries(departments).map(([id, name]) => (
-                <option key={id} value={id}>
-                  {name}
-                </option>
-              ))}
-            </select>
+      <div
+        className="bg-white rounded-lg shadow-lg w-full max-w-3xl"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}
+      >
+        <div className="bg-gray-800 text-white flex items-center justify-between p-4 rounded-t-lg flex-shrink-0">
+          <div className="flex items-center gap-4">
+            <FiArrowLeft
+              className="back-btn cursor-pointer"
+              onClick={onClose}
+              title="Go Back"
+            />
+            <h3 className="text-lg font-semibold">User Details</h3>
           </div>
-        )}
+          <div className="actions flex items-center gap-2">
+            {profile?.role === "system_administrator" && (
+              <>
+                <button
+                  className="delete-btn text-gray-200 hover:text-gray-900 px-4 py-2 rounded bg-red-600 hover:bg-red-700 transition flex items-center gap-2"
+                  onClick={() => setShowDeleteModal(true)}
+                  title="Delete Asset"
+                >
+                  <FiTrash />
+                  <span>Delete</span>
+                </button>
+                <button
+                  className="save-btn bg-green-600 text-white px-5 py-2 rounded hover:bg-green-700 transition flex items-center gap-2"
+                  onClick={() => setShowUpdateModal(true)}
+                  title="Save Changes"
+                >
+                  <FiCheckSquare />
+                  <span>Save</span>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
 
-        <div className={selectedUser.role !== "Admin" ? "" : "sm:col-span-2"}>
-          <label className="block text-sm font-medium text-gray-700">
-            Position
-          </label>
-          <select
-            value={selectedUser?.title || ""}
-            onChange={(e) =>
-              setSelectedUser({ ...selectedUser, title: e.target.value })
-            }
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">None</option>
-            {Object.entries(titles).map(([id, name]) => (
-              <option key={id} value={id}>
-                {name}
-              </option>
-            ))}
-          </select>
+        <div className="overflow-y-auto flex-1" style={{ minHeight: 0 }}>
+          {showDeleteModal && (
+            <ConfirmModal
+              message={`Are you sure you want to delete '${selectedUser.firstName}' '${selectedUser.lastName}'?`}
+              onConfirm={handleDeleteUser}
+              onCancel={() => setShowDeleteModal(false)}
+            />
+          )}
+
+          {showUpdateModal && (
+            <ConfirmModal
+              message={`Are you sure you want to update '${selectedUser.firstName}' '${selectedUser.lastName}'?`}
+              onConfirm={handleUpdateUser}
+              onCancel={() => setShowUpdateModal(false)}
+            />
+          )}
+
+          <MessageModal
+            error={error}
+            message={message}
+            clearMessages={clearMessages}
+          />
+
+          {isLoading && <SpinnerOverlay logo="A" />}
+
+          <div className="p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  value={selectedUser.firstName || ""}
+                  onChange={(e) =>
+                    setSelectedUser({
+                      ...selectedUser,
+                      firstName: e.target.value,
+                    })
+                  }
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  disabled={isNotSystemAdmin}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  value={selectedUser.lastName || ""}
+                  onChange={(e) =>
+                    setSelectedUser({
+                      ...selectedUser,
+                      lastName: e.target.value,
+                    })
+                  }
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  disabled={isNotSystemAdmin}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Contact Number
+                </label>
+                <input
+                  type="text"
+                  value={selectedUser.contactNumber || ""}
+                  onChange={(e) =>
+                    setSelectedUser({
+                      ...selectedUser,
+                      contactNumber: e.target.value,
+                    })
+                  }
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  disabled={isNotSystemAdmin}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Email
+                </label>
+                <input
+                  type="text"
+                  value={selectedUser.email || ""}
+                  onChange={(e) =>
+                    setSelectedUser({ ...selectedUser, email: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  disabled={isNotSystemAdmin}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Status
+                </label>
+                <select
+                  value={selectedUser.status}
+                  onChange={(e) =>
+                    setSelectedUser({ ...selectedUser, status: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  disabled={isNotSystemAdmin}
+                >
+                  <option value="Available">Available</option>
+                  <option value="In Operation">In Operation</option>
+                  <option value="Unavailable">Unavailable</option>
+                </select>
+              </div>
+
+              {![
+                "system_administrator",
+                "operational_administrator",
+                "reporter",
+                "finance",
+              ].includes(selectedUser.role) && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Department
+                  </label>
+                  <select
+                    value={selectedUser?.department || ""}
+                    onChange={(e) =>
+                      setSelectedUser({
+                        ...selectedUser,
+                        department: e.target.value,
+                      })
+                    }
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    disabled={isNotSystemAdmin}
+                  >
+                    <option value="">None</option>
+                    {Object.entries(departments).map(([id, name]) => (
+                      <option key={id} value={id}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div
+                className={selectedUser.role !== "Admin" ? "" : "sm:col-span-2"}
+              >
+                <label className="block text-sm font-medium text-gray-700">
+                  Position
+                </label>
+                <select
+                  value={selectedUser?.title || ""}
+                  onChange={(e) =>
+                    setSelectedUser({ ...selectedUser, title: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  disabled={isNotSystemAdmin}
+                >
+                  <option value="">None</option>
+                  {Object.entries(titles).map(([id, name]) => (
+                    <option key={id} value={id}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </ModalDetails>
+    </div>
   );
 };
 

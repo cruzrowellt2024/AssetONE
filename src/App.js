@@ -5,6 +5,7 @@ import Main from "./pages/Main/MainPage";
 import Dashboard from "./pages/Main/DashboardPage/Dashboard";
 import UserManagement from "./pages/Main/UserManagement/UserManagement";
 import Requests from "./pages/Main/Requests/Requests";
+import Depreciation from "./pages/Main/Depreciation/DepreciationCalculator";
 import ManageAssets from "./pages/Main/ManageAsset/ManageAssets";
 import MaintenanceScheduling from "./pages/Main/MaintenanceScheduling/MaintenanceScheduling";
 import LocationManagement from "./pages/Main/Records/LocationManagement/LocationManagement";
@@ -34,6 +35,7 @@ const router = createBrowserRouter([
           { path: "manage-assets", element: <ManageAssets /> },
           { path: "user-management", element: <UserManagement /> },
           { path: "requests", element: <Requests /> },
+          { path: "depreciation-calculation", element: <Depreciation /> },
           { path: "generate-reports", element: <GenerateReports /> },
           { path: "account-settings", element: <AccountSettings /> },
           { path: "maintenance-scheduling", element: <MaintenanceScheduling /> },
