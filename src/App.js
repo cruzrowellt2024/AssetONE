@@ -14,7 +14,6 @@ import GenerateReports from "./pages/Main/GenerateReports/GenerateReports";
 import AccountSettings from "./pages/Main/AccountSettings/AccountSettings";
 import PrivateRoute from "./components/PrivateRoute";
 import AssetCategories from "./pages/Main/Records/AssetCategories/AssetCategories";
-import UserTitle from "./pages/Main/Records/UserTitle/UserTitle";
 import Departments from "./pages/Main/Records/Departments/Departments";
 import "./App.css";
 
@@ -43,7 +42,6 @@ const router = createBrowserRouter([
           { path: "vendor-contact", element: <VendorContact /> },
           { path: "asset-categories", element: <AssetCategories/> },
           { path: "departments", element: <Departments/> },
-          { path: "user-titles", element: <UserTitle/> },
         ]},
     ],
   },

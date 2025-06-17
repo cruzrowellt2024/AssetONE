@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { addUser } from "../../../firebase/userservices";
 import { fetchDepartments } from "../../../firebase/departmentservices";
-import { fetchPositions } from "../../../firebase/usertitleservices";
 import { useAuth } from "../../../context/AuthContext";
 import { FiArrowLeft } from "react-icons/fi";
 import MessageModal from "../../../components/Modal/MessageModal";
@@ -16,7 +15,7 @@ const AddUser = ({ onClose }) => {
   const [role, setRole] = useState("Admin");
   const [userDepartment, setUserDepartment] = useState("None");
   const [departments, setDepartments] = useState({});
-  const [userTitle, setUserTitle] = useState("None");
+  const [priorityLevel, setPriorityLevel] = useState("None");
   const [titles, setTitles] = useState({});
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -24,7 +23,6 @@ const AddUser = ({ onClose }) => {
 
   useEffect(() => {
     loadDropdownData(fetchDepartments, setDepartments);
-    loadDropdownData(fetchPositions, setTitles);
   }, []);
 
   const loadDropdownData = async (fetchFn, setFn) => {
@@ -51,14 +49,21 @@ const AddUser = ({ onClose }) => {
 
   const handleAddUser = async () => {
     if (
-      [firstName, lastName, email, password, role, userTitle].some(
-        (field) => !field.trim()
-      )
+      [
+        firstName,
+        lastName,
+        email,
+        password,
+        role,
+        userDepartment,
+        priorityLevel,
+      ].some((field) => !field.trim())
     ) {
       setError("All fields are required!");
       return;
     }
     setIsLoading(true);
+    const parsedPriorityLevel = parseInt(priorityLevel);
     try {
       await addUser(
         firstName,
@@ -67,7 +72,7 @@ const AddUser = ({ onClose }) => {
         password,
         role,
         userDepartment,
-        userTitle,
+        parsedPriorityLevel,
         profile?.id
       );
       setMessage("User was added successfully!");
@@ -176,19 +181,22 @@ const AddUser = ({ onClose }) => {
               </select>
             </div>
             <div>
-              <label className="font-semibold text-gray-700">Position</label>
+              <label className="font-semibold text-gray-700">
+                Priority Level
+              </label>
               <select
                 className="w-full border border-gray-300 rounded px-4 py-2"
-                value={userTitle}
-                onChange={(e) => setUserTitle(e.target.value)}
+                value={priorityLevel}
+                onChange={(e) => setPriorityLevel(e.target.value)}
                 required
               >
-                <option value="">Select Position</option>
-                {Object.entries(titles).map(([id, title]) => (
-                  <option key={id} value={id}>
-                    {title.name}
-                  </option>
-                ))}
+                <option value="" disabled selected>
+                  Select user priority
+                </option>
+                <option value="25">Default Priority</option>
+                <option value="50">Medium</option>
+                <option value="75">High</option>
+                <option value="100">Top Priority</option>
               </select>
             </div>
 

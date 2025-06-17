@@ -9,7 +9,6 @@ import { useAuth } from "../../../context/AuthContext";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
-  const [titles, setTitles] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [isAddingUser, setIsAddingUser] = useState(false);
@@ -43,6 +42,14 @@ const UserManagement = () => {
     Unavailable: false,
   });
 
+  const getPriorityLabel = (score) => {
+    if (score <= 25) return "Default Priority";
+    if (score <= 50) return "Medium";
+    if (score <= 75) return "High";
+    if (score <= 100) return "Top Priority";
+    return "None";
+  };
+
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 30;
 
@@ -59,24 +66,6 @@ const UserManagement = () => {
       (error) => {
         console.error("Error fetching users in real-time:", error);
         setUsers([]);
-      }
-    );
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, "positions"),
-      (querySnapshot) => {
-        const titlesMap = {};
-        querySnapshot.docs.forEach((doc) => {
-          titlesMap[doc.id] = doc.data().name;
-        });
-        setTitles(titlesMap);
-      },
-      (error) => {
-        console.error("Error fetching position:", error);
-        setTitles({});
       }
     );
     return () => unsubscribe();
@@ -263,7 +252,7 @@ const UserManagement = () => {
             <tr>
               <th className="w-[25%] text-start">Name</th>
               <th className="hidden sm:table-cell w-[20%] text-start">
-                Position
+                Priority Level
               </th>
               <th className="w-[20%] text-start">Role</th>
               <th className="hidden sm:table-cell w-[17.5%] text-start">
@@ -295,7 +284,8 @@ const UserManagement = () => {
                   <td
                     className={`hidden sm:table-cell w-[20%] border-b border-gray-300 py-2 truncate`}
                   >
-                    {titles[user.position] || user.position}
+                    {getPriorityLabel(user.priorityScore) ||
+                      user.priorityScore}
                   </td>
                   <td
                     className={`w-[20%] border-b border-gray-300 py-2 truncate`}

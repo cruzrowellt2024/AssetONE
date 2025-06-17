@@ -13,7 +13,7 @@ const ManageAsset = () => {
 
   return (
     <div className="flex flex-col m-4 w-[calc(100%-2rem)] h-[calc(100%-2rem)] max-h-[calc(100%-6rem)] rounded-lg shadow-2xl">
-      {profile.role !== "finance" ? (
+      {profile?.role !== "finance" ? (
         <>
       {isOnAssetList ? (
         <AssetList

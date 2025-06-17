@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { addRequest } from "../../../firebase/requestservices";
 import { useAuth } from "../../../context/AuthContext";
 import { updateUnit, fetchUnitById } from "../../../firebase/assetunitservices";
-import { fetchPositionById } from "../../../firebase/usertitleservices";
 import { FiArrowLeft } from "react-icons/fi";
 import MessageModal from "../../../components/Modal/MessageModal";
 import { fetchAssets } from "../../../firebase/assetservices";
@@ -38,26 +37,6 @@ const AddRequest = ({ assetId, onClose }) => {
       loadAsset();
     }
   }, [assetId]);
-
-  useEffect(() => {
-    const loadUserProfile = async () => {
-      try {
-        let titleInfo = { name: "", score: 0 };
-        if (profile?.title) {
-          titleInfo = await fetchPositionById(profile.title);
-        }
-        setEnrichedProfile({
-          ...profile,
-          titleName: titleInfo.name,
-          titleScore: titleInfo.score,
-        });
-      } catch (error) {
-        console.error("Failed to load user profile:", error);
-      }
-    };
-
-    if (profile) loadUserProfile();
-  }, [profile]);
 
   useEffect(() => {
     const fetchAssetName = async () => {
@@ -98,11 +77,12 @@ const AddRequest = ({ assetId, onClose }) => {
 
     try {
       const priorityScore = calculatePriorityScore({
-        titleScore: enrichedProfile?.titleScore || 0,
+        priorityScore: parseInt(profile?.priorityScore) || 0,
         urgency: parseInt(urgency),
         impact: parseInt(impact),
       });
-      const reportedBy = enrichedProfile?.id || "";
+
+      const reportedBy = profile?.id || "";
       let assetStatus = status;
       if (requestType === "Maintenance Request") assetStatus = "In Repair";
 
@@ -137,17 +117,17 @@ const AddRequest = ({ assetId, onClose }) => {
     setIsLoading(false);
   };
 
-  function calculatePriorityScore({ titleScore, urgency, impact }) {
-    const weightTitle = 0.5;
+  function calculatePriorityScore({ priorityScore, urgency, impact }) {
+    const weightPriority = 0.5;
     const weightUrgency = 0.3;
     const weightImpact = 0.2;
 
-    const normalizedTitle = Math.min(Math.max(titleScore, 0), 100);
+    const normalizedPriority = Math.min(Math.max(priorityScore, 0), 100);
     const normalizedUrgency = Math.min(Math.max(urgency, 0), 100);
     const normalizedImpact = Math.min(Math.max(impact, 0), 100);
 
     const score =
-      normalizedTitle * weightTitle +
+      normalizedPriority * weightPriority +
       normalizedUrgency * weightUrgency +
       normalizedImpact * weightImpact;
 

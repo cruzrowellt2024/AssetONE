@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { updateUser, deleteUser } from "../../../firebase/userservices";
 import { fetchDepartments } from "../../../firebase/departmentservices";
-import { fetchPositions } from "../../../firebase/usertitleservices";
 import { useAuth } from "../../../context/AuthContext";
 import ModalDetails from "../../../components/Modal/ModalDetails";
 import MessageModal from "../../../components/Modal/MessageModal";
@@ -12,7 +11,6 @@ import { FiArrowLeft, FiCheckSquare, FiTrash } from "react-icons/fi";
 const UserDetails = ({ userDetails, onClose }) => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [departments, setDepartments] = useState({});
-  const [titles, setTitles] = useState({});
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -30,7 +28,6 @@ const UserDetails = ({ userDetails, onClose }) => {
 
   useEffect(() => {
     loadIdNameMap(fetchDepartments, setDepartments, "departments");
-    loadIdNameMap(fetchPositions, setTitles, "titles");
   }, []);
 
   const loadIdNameMap = async (fetchFn, setFn, label) => {
@@ -284,22 +281,24 @@ const UserDetails = ({ userDetails, onClose }) => {
                 className={selectedUser.role !== "Admin" ? "" : "sm:col-span-2"}
               >
                 <label className="block text-sm font-medium text-gray-700">
-                  Position
+                  Priority Level
                 </label>
                 <select
-                  value={selectedUser?.title || ""}
+                  value={selectedUser.priorityScore?.toString() || ""}
                   onChange={(e) =>
-                    setSelectedUser({ ...selectedUser, title: e.target.value })
+                    setSelectedUser({
+                      ...selectedUser,
+                      priorityScore: parseInt(e.target.value),
+                    })
                   }
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   disabled={isNotSystemAdmin}
                 >
                   <option value="">None</option>
-                  {Object.entries(titles).map(([id, name]) => (
-                    <option key={id} value={id}>
-                      {name}
-                    </option>
-                  ))}
+                  <option value="25">Default Priority</option>
+                  <option value="50">Medium</option>
+                  <option value="75">High</option>
+                  <option value="100">Top Priority</option>
                 </select>
               </div>
             </div>

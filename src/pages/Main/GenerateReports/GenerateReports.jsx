@@ -23,7 +23,6 @@ import {
   fetchVendors,
   fetchVendorsWithAssetCount,
 } from "../../../firebase/vendorservices";
-import { fetchPositions } from "../../../firebase/usertitleservices";
 import MessageModal from "../../../components/Modal/MessageModal";
 import SpinnerOverlay from "../../../components/SpinnerOverlay";
 
@@ -76,7 +75,6 @@ const pdfColumnSchemas = {
     { key: "firstName", label: "First Name" },
     { key: "lastName", label: "Last Name" },
     { key: "role", label: "Role" },
-    { key: "title", label: "Position" },
     { key: "department", label: "Department" },
     { key: "status", label: "Status" },
     { key: "email", label: "Primary Email" },
@@ -262,7 +260,6 @@ const GenerateReports = () => {
     const departmentList = await fetchDepartments();
     const locationList = await fetchLocations();
     const vendorList = await fetchVendors();
-    const titleList = await fetchPositions();
 
     const usersMap = userList.reduce((acc, user) => {
       acc[user.id] =
@@ -297,11 +294,6 @@ const GenerateReports = () => {
       return acc;
     }, {});
 
-    const titlesMap = titleList.reduce((acc, title) => {
-      acc[title.id] = title.name || "Unknown Position";
-      return acc;
-    }, {});
-
     const { headers, rows } = getPDFTableData(
       reportType,
       reportData,
@@ -311,7 +303,6 @@ const GenerateReports = () => {
       departmentsMap,
       locationsMap,
       vendorsMap,
-      titlesMap
     );
 
     const doc = new jsPDF();

@@ -267,6 +267,12 @@ const AssetList = ({ onClose, onSelectAsset }) => {
                   onClick={() => {
                     handleAssetSelection(asset);
                   }}
+                  className={`${
+                    asset.dateUpdated.toDate() >
+                    new Date(Date.now() - 5 * 60 * 1000)
+                      ? "bg-green-100"
+                      : ""
+                  }`}
                 >
                   <td
                     className={`w-[35%] border-b border-gray-300 py-2 truncate`}

@@ -5,7 +5,6 @@ import {
   fetchSpecs,
   updateUnitSpecs,
 } from "../../../firebase/assetunitservices";
-import { fetchCategories } from "../../../firebase/categoryservices";
 import { fetchDepartments } from "../../../firebase/departmentservices";
 import { fetchLocations } from "../../../firebase/locationservices";
 import { fetchVendors } from "../../../firebase/vendorservices";
@@ -31,7 +30,6 @@ const AssetDetails = ({ unitDetails, onClose }) => {
   const [users, setUsers] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [showQrCode, setShowQrCode] = useState(false);
-  const [categories, setCategories] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [locations, setLocations] = useState([]);
   const [vendors, setVendors] = useState([]);
@@ -57,7 +55,6 @@ const AssetDetails = ({ unitDetails, onClose }) => {
   }, [unitDetails]);
 
   useEffect(() => {
-    loadDropdownData(fetchCategories, setCategories);
     loadDropdownData(fetchDepartments, setDepartments);
     loadDropdownData(fetchLocations, setLocations);
     loadDropdownData(fetchVendors, setVendors);
@@ -117,9 +114,13 @@ const AssetDetails = ({ unitDetails, onClose }) => {
     try {
       const data = await fetchFn();
       const mappedData = data.reduce((acc, item) => {
+      if (fetchFn === fetchLocations) {
+        acc[item.id] = `${item.name} - ${item.address}`;
+      } else {
         acc[item.id] = item.name;
-        return acc;
-      }, {});
+      }
+      return acc;
+    }, {});
       setFn(mappedData);
     } catch (error) {
       console.error(`Error fetching data:`, error);

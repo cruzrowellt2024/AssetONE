@@ -45,7 +45,7 @@ const generateUserId = async () => {
     }
 };
 
-const addUser = async (firstName, lastName, email, password, role, department, title, logby) => {
+const addUser = async (firstName, lastName, email, password, role, department, priorityScore, logby) => {
     try {
         const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
         const user = userCredential.user;
@@ -62,7 +62,7 @@ const addUser = async (firstName, lastName, email, password, role, department, t
             secondaryEmail: "",
             contactNumber: "",
             department,
-            position: title,
+            priorityScore,
             dateCreated: serverTimestamp(),
             dateUpdated: serverTimestamp(),
         });
@@ -93,7 +93,7 @@ const updateUser = async (selectedUser, logby) => {
             secondaryEmail: selectedUser.secondaryEmail,
             department: selectedUser.department,
             status: selectedUser.status,
-            position: selectedUser.position || "None",
+            priorityScore: selectedUser.priorityScore || "None",
             role: selectedUser.role,
             dateUpdated: serverTimestamp(),
         }, { merge: true });

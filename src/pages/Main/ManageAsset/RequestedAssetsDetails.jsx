@@ -121,7 +121,7 @@ const RequestAssetsDetails = ({ requestAssetsDetails, onClose }) => {
             </h3>
           </div>
           <div className="flex items-center gap-2">
-            {["approved", "rejected", "acquired"].includes("acquired") ? (
+            {["approved", "rejected", "acquired"].includes(selectedRequest.status) ? (
               <div
                 className={`flex items-center gap-2 px-5 py-2 rounded bg-gray-700 font-bold ${
                   selectedRequest.status.toLowerCase().trim() === "approved"

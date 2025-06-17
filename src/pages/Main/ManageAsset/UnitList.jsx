@@ -583,22 +583,21 @@ const UnitList = ({ assetDetails }) => {
                     <td
                       className={`hidden sm:table-cell w-[25%] border-b border-gray-300 py-2 truncate`}
                     >
-                      {departments[unit.department] ||
-                        (unit.department === "in_stock"
-                          ? "Inventory - On Stock"
-                          : "Unknown")}
+                      {unit.department === "in_stock"
+                        ? "Inventory - On Stock"
+                        : departments[unit.department] || "Unknown"}
                     </td>
                     <td
                       className={`w-[25%] border-b border-gray-300 py-2 truncate`}
                     >
                       <div className="flex items-center gap-2">
-                      <span
-                        className={`w-3 h-3 rounded-full ${getStatusColor(
-                          unit.status
-                        )}`}
-                      ></span>
-                      <span>{unit.status || "N/A"}</span>
-                    </div>
+                        <span
+                          className={`w-3 h-3 rounded-full ${getStatusColor(
+                            unit.status
+                          )}`}
+                        ></span>
+                        <span>{unit.status || "N/A"}</span>
+                      </div>
                     </td>
                     <td
                       className={`hidden sm:table-cell w-[25%] border-b border-gray-300 py-2 truncate`}
@@ -639,13 +638,13 @@ const UnitList = ({ assetDetails }) => {
                       className={`w-[25%] border-b border-gray-300 py-2 truncate`}
                     >
                       <div className="flex items-center gap-2">
-                      <span
-                        className={`w-3 h-3 rounded-full ${getStatusColor(
-                          request.status
-                        )}`}
-                      ></span>
-                      <span>{request.status || "N/A"}</span>
-                    </div>
+                        <span
+                          className={`w-3 h-3 rounded-full ${getStatusColor(
+                            request.status
+                          )}`}
+                        ></span>
+                        <span>{request.status || "N/A"}</span>
+                      </div>
                     </td>
                     <td
                       className={`w-[25%] border-b border-gray-300 py-2 truncate`}

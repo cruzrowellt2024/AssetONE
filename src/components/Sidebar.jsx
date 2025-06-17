@@ -138,6 +138,7 @@ const Sidebar = ({
           {shouldShowItem([
             "operational_administrator",
             "maintenance_head",
+            "system_administrator",
           ]) && (
             <li
               className={`flex items-center h-12 px-4 py-3 hover:bg-gray-700 ${
@@ -151,76 +152,16 @@ const Sidebar = ({
               >
                 <FiUser className="text-lg ml-3" />
                 {(!isCollapsed || (isMobile && mobileOpen)) && (
-                  <span className="ml-3">{profile?.role === "operational_administrator" ? "Asset Team" : "Maintenance Team"}</span>
+                  <span className="ml-3">
+                    {profile?.role === "system_administrator"
+                      ? "User Lists"
+                      : profile?.role === "operational_administrator"
+                      ? "Asset Team"
+                      : "Maintenance Team"}
+                  </span>
                 )}
               </Link>
             </li>
-          )}
-
-          {/* Extended submenu */}
-          {shouldShowItem(["system_administrator"]) && (
-            <>
-              <li
-                className={`flex items-center justify-between h-12 px-4 py-3 cursor-pointer hover:bg-gray-700 select-none ${
-                  isUserListOpen ? "bg-gray-800" : ""
-                }`}
-                onClick={toggleUserList}
-                aria-expanded={isUserListOpen}
-                aria-controls="user-submenu"
-              >
-                <div className="flex items-center">
-                  <FiUsers className="text-lg ml-3" />
-                  {(!isCollapsed || (isMobile && mobileOpen)) && (
-                    <span className="ml-3">User Management</span>
-                  )}
-                </div>
-                {(!isCollapsed || (isMobile && mobileOpen)) && (
-                  <span className="mr-2">
-                    {isUserListOpen ? <FiChevronUp /> : <FiChevronDown />}
-                  </span>
-                )}
-              </li>
-
-              {isUserListOpen && (
-                <ul
-                  id="user-submenu"
-                  className="flex flex-col border-l border-gray-200"
-                >
-                  <li
-                    className={`flex items-center h-12 px-4 py-3 hover:bg-gray-700 ${
-                      isActive("user-management") ? "bg-gray-800" : ""
-                    }`}
-                  >
-                    <Link
-                      to="user-management"
-                      className="flex items-center w-full"
-                      onClick={() => handleLinkClick("User Management")}
-                    >
-                      <FiUser className="text-lg ml-3" />
-                      {(!isCollapsed || (isMobile && mobileOpen)) && (
-                        <span className="ml-3">User List</span>
-                      )}
-                    </Link>
-                  </li>
-                  <li
-                    className={`flex items-center h-12 px-4 py-2 hover:bg-gray-700 ${
-                      isActive("user-titles") ? "bg-gray-800" : ""
-                    }`}
-                  >
-                    <Link
-                      to="user-titles"
-                      className="flex items-center w-full"
-                      onClick={() => handleLinkClick("User Positions")}
-                    >
-                      <FiAward className="text-lg ml-3" />
-                      {(!isCollapsed || (isMobile && mobileOpen)) && (
-                        <span className="ml-3">User Positions</span>
-                      )}
-                    </Link>
-                  </li>
-                </ul>
-              )}
-            </>
           )}
 
           {/* Asset List */}
@@ -242,16 +183,18 @@ const Sidebar = ({
               >
                 <FiDatabase className="text-lg ml-3" />
                 {(!isCollapsed || (isMobile && mobileOpen)) && (
-                  <span className="ml-3">{profile.role === "finance" ? "Asset Requests" : "Asset Inventory"}</span>
+                  <span className="ml-3">
+                    {profile.role === "finance"
+                      ? "Asset Requests"
+                      : "Asset Inventory"}
+                  </span>
                 )}
               </Link>
             </li>
           )}
 
           {/* Depreciation */}
-          {shouldShowItem([
-            "finance",
-          ]) && (
+          {shouldShowItem(["finance"]) && (
             <li
               className={`flex items-center h-12 px-4 py-3 hover:bg-gray-700 ${
                 isActive("depreciation-calculation") ? "bg-gray-800" : ""
@@ -271,10 +214,7 @@ const Sidebar = ({
           )}
 
           {/* Maintenance Schedule */}
-          {shouldShowItem([
-            "maintenance_head",
-            "maintenance_technician",
-          ]) && (
+          {shouldShowItem(["maintenance_head", "maintenance_technician"]) && (
             <li
               className={`flex items-center h-12 px-4 py-3 hover:bg-gray-700 ${
                 isActive("maintenance-scheduling") ? "bg-gray-800" : ""
